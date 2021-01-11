@@ -72,3 +72,11 @@
     * 맥 안씀
 * 리눅스 기준
     * 리눅스 안씀
+
+
+# 4. 함께 보면 좋은 자료
+* 노드 공식 사이트 : <https://nodejs.org/ko/>
+* 노드 공식 사이트의 가이드 : <https://nodejs.org/ko/docs/guides/>
+* 노드에 대한 전반적인 설명 : <https://nodejs.dev/>
+* 이벤트 루프 설명 : <https://nodejs.org/ko/docs/guides/event-loop-timers-and-nexttick/>
+* 이벤트 루프에 대한 시각적 설명 : <https://latentflip.com/loupe/>
