@@ -25,6 +25,32 @@ first();
 * LIFO 구조라서 스택이라고 불린다.
     * LIFO : Last In First out (나중에 들어간게 먼저 나오는것을 의미한다.)
 
+## 1.2 이벤트 루프
+* ch01 참고
+* 강의 참고 (노드교과서 2-2. 이벤트 루프 알아보기)
+
+# 2. const, let
+* ES2015 이전에는 var로 변수를 선언했다.
+* ES2015 부터는 const와 let이 대체했다.
+* 가장 큰 차이점 : 블록 스코프(var는 함수 스코프이다.)
+* var는 쓸 일이 없고, 알기만 하면된다.
+```js
+if(true){
+    var x = 3;
+}
+console.log(x);     // 3
+
+if(true){
+    const y = 3;
+}
+console.log(y);     // Uncaught ReferenceError ~~~
+```
+## 2.1 const
+* const는 한 번 값을 할당하면 다른 값을 할당할 수 없다.
+* 먼저 const로 선언 후 나중에 필요하면 let으로 바꾸면 된다.
+## 2.2 let
+* let은 한 번 선언된 이후에도 다시 값을 할당할 수 있다.
+
 
 
 
