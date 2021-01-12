@@ -235,8 +235,32 @@ const promise2 = Promise.resolve("성공2");
     * AJAX 요청 시 Axios 라이브러리를 사용하는 게 편하다.
     * HTML에 아래 스크립트를 추가하면 사용할 수 있다.
 ```html
-<script src="https://unpkg.com/axios/dist/axios.min.js"><script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 ```
+* GET 요청 보내기
+    * axios.get 함수의 인수로 요청을 보낼 주소를 넣으면 된다.
+    * 프로미스 기반 코드라 async/await 사용 가능.
+```js
+axios.get("https://www.zerocho.com/api/get").then((result) => {
+            console.log(result);
+            console.log(result.data);   //  {}
+        }).catch((error) => {
+            console.log(error);
+        });
+
+// await 을 사용하여 바꾸면
+(async () => {
+    try{
+        const result = await axios.get("https://www.zerocho.com/api/get");
+        console.log(result);
+        console.log(result.data);   //  {}
+    }catch (error) {
+        console.error(error);
+    }
+})();
+```
+* POST 요청을 하는 코드(데이터를 담아 서버로 보내는 경우)
+    * 전체적인 구조는 비슷하나 두 번째 인수로 데이터를 넣어 보냄
 
 
 

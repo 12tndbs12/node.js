@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>예제</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        axios.get("https://www.zerocho.com/api/get").then((result) => {
+            console.log(result);
+            console.log(result.data);   //  {}
+        }).catch((error) => {
+            console.log(error);
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>
