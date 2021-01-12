@@ -126,6 +126,80 @@ const not2 = x => !x;
 * 화살표 함수가 기존 function() {}을 대체하는 건 아니다. (this가 다르기 때문)
 * this를 쓸거면 function, this를 쓰지 않는다면 화살표함수를 권장한다.
 
+# 6. 구조분해 할당
+* this가 있을경우는 구조분해 할당을 사용안하는걸 권장한다.
+```js
+const example = {a: 123, b: {c: 135, d: 146}};
+// 기존 문법
+const a = example.a;
+const d = example.b.d;
+// 추가된 문법
+const {a, b:{d}} = example;
+console.log(a);     // 123
+console.log(d);     // 146
+```
+
+```js
+arr = [1,2,3,4,5]
+// 기존 문법
+const x = arr[0];
+const y = arr[1];
+const z = arr[4];
+// 추가된 문법
+const [x,y, , ,z] = arr;
+```
+
+# 7. 클래스
+* 프로토타입 분법을 깔끔하게 작성할 수 있는 Class 문법 도입
+    * Constructor(생성자), Extends(상속) 등을 깔끔하게 처리할 수 있다.
+    * 코드가 그룹화되어 가독성이 향상된다.
+* p.73
+
+# 8. 프로미스
+* 프로미스란 내용이 실행은 되었지만 결과를 아직 반환하지 않은 객체를 말한다.
+* Then을 붙이면 결과를 반환한다.
+* 실행이 완료되지 않았으면 완료된 후에 Then 내부 함수가 실행된다.
+* 코드를 분리할 수 있다.
+* 쉽게 설명하자면 실행은 바로 하고, 결괏값은 나중에 받는 객체이다.
+```js
+const condition = true; // true면 resolve, false면 reject
+const promise = new Promise((resolve, reject) => {
+    if(condition){
+        resolve("성공");
+    }else{
+        reject("실패");
+    }
+});
+// 다른 코드가 들어갈 수 있음.
+    promise
+        .then((message) => {
+            console.log(message);   //  성공(resolve)한 경우 실행
+        })
+    .catch((error) => {
+        console.error(error);   //  실패(reject)한 경우 실행
+    })
+    .finally(() => {
+        console.log("무조건");  //  끝나고 무조건 실행
+    });
+```
+* **Promise.resolve(성공리턴값)** : 바로 resolve하는 프로미스
+* **Promise.reject(실패리턴값)** : 바로 reject하는 프로미스
+* **Promise.all(배열)** : 여러 개의 프로미스를 동시에 실행한다.
+    * 하나라도 실패하면 catch로 간다.
+    * 최신으로는 allSettled로 실패한 것만 추려낼 수 있다.
+```js
+const promise1 = Promise.resolve("성공1");
+const promise2 = Promise.resolve("성공2");
+Promise.all([promise1, promise2])
+    .then((result) = > {
+        console.log(result);    //  ["성공1", "성공2"];
+    })
+    .catch((error) => {
+        console.error(error);
+    });
+
+```
+
 
 
 
