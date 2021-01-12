@@ -261,12 +261,104 @@ axios.get("https://www.zerocho.com/api/get").then((result) => {
 ```
 * POST 요청을 하는 코드(데이터를 담아 서버로 보내는 경우)
     * 전체적인 구조는 비슷하나 두 번째 인수로 데이터를 넣어 보냄
+```js
+(async () => {
+    try{
+        const result = await axios.post("https://www.zerocho.com/api/post/json", {
+            name : "zerocho",
+            birth : 1994,
+        });
+        console.log(result);
+        console.log(result.data);   //  {}
+    }catch (error) {
+        console.error(error);
+    }
+})();
+```
+## 10-2. FormData
+* HTML form 태그의 데이터를 동적으로 제어할 수 있는 기능이다. 주로 AJAX와 함께 사용된다.
+* 보통 이미지 업로드나 파일 업로드, 동영상 업로드에 자주 쓰인다.
+* HTML form 태그에 담긴 데이터를 AJAX 요청으로 보내고 싶은 경우
+    * formData 객체를 이용한다.
+* FormData 메서드
+    * Append로 데이터를 하나씩 추가
+    * Has로 데이터 존재 여부 확인
+    * Get으로 데이터 조회
+    * getAll로 데이터 모두 조회
+    * delete로 데이터 삭제
+    * set으로 데이터 수정
+```js
+const formData = new FormData();
+formData.append("name", "zerocho");
+formData.append("item", "orange");
+formData.append("item", "melon");
+formData.has("item");   //  true
+formData.has("money");   //  false;
+formData.get("item");   //  orange
+formData.getAll("item") //  ["orange", "melon"];
+formData.append("test", ["hi","zero"]);
+formData.get("test");   //  hi, zero
+formData.delete("test");
+formData.get("test");   //  null
+formData.set("item", "apple");
+formData.getAll("item");    //  ["apple"];
+```
+* Axios의 data 자리에 formData를 넣어서 보내면 된다.
+```js
+(async () => {
+    try{
+        const formData = new FormData();
+        formData.append("name", "zerocho");
+        formData.append*("birth", 1994);
+        const result = await axios.post("https://www.zerocho.com/api/post/json", formData);
+        console.log(result);
+        console.log(result.data);
+    }catch (error) {
+        console.error(error);
+    }
+})();
+```
 
+## 10-3. encodeURIComponent, decodeURIComponent
+* 가끔 주소창에 한글을 입력하면 서버가 처리하지 못하는 경우가 있다.
+    * 이 경우 encodeURIComponent로 한글을 감싸줘서 처리한다.
+    * 받는 쪽에서는 decodeURIComponent를 사용하면 된다.
+* p.85
+```js
+(async () => {
+    try{
+        const result = await axios.get(`https://www.zerocho.com/api/search/${encodeURIComponent('노드')}`);
+        console.log(result);
+        console.log(result.data);
+    }catch (error) {
+        console.error(error);
+    }
+})();
+```
 
-
-
-
-
+## 10-4. 데이터 속성과 dataset
+* HTML 태그에 데이터를 저장하는 방법
+    * 서버의 데이터를 프런트엔드로 내려줄 때 사용한다.
+    * 태그 속성으로 data-속성명
+    * 자바스크립트에서 태그.dataset.속성명으로 접근이 가능하다.
+        * **단, 앞의 data-접두어는 사라지고 -뒤에 위치한 글자는 대문자가 된다.**
+        * data-user-job -> dataset.usetJob
+        * data-id -> dataset.id
+    * 반대로 자바스크립트 dataset에 값을 넣으면 data-속성이 생긴다.
+        *dataset.monthSalary = 10000 -> data-month-salary="10000"
+    * 단점 : 누구나 이 데이터를 볼 수 있다.
+```html
+<ul>
+    <li data-id="1" data-user-job="programmer">Zero</li>
+    <li data-id="2" data-user-job="designer">Nero</li>
+    <li data-id="3" data-user-job="programmer">Hero</li>
+    <li data-id="4" data-user-job="ceo">Kero</li>
+</ul>
+<script>
+    console.log(document.querySelector('li').dataset);
+    //  {id}
+</script>
+```
 
 
 
