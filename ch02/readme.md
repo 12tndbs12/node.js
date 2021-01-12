@@ -197,10 +197,46 @@ Promise.all([promise1, promise2])
     .catch((error) => {
         console.error(error);
     });
-
 ```
 
+# 9. async / await
+* 노드 7.6 버전부터 지원되며, ES2017에서 추가되었다.
+* async / await은 프로미스를 사용한 코드를 한 번 더 꺌끔하게 줄인다.
+* 변수 = await 프로미스; 인 경우 프로미스가 resolve된 값이 변수에 저장된다.
+* 변수 await 값;인 경우 그 값이 변수에 저장된다.
+* 예전에는 async 함수 안에만 await을 쓸 수 있었으나 지금은 아래 예제처럼 가능
+* p.78
+```js
+const promise = new Promise(...)
+promise.then((result) => ...)
 
+const result = await promise;
+
+```
+## 9-1 for await of
+* 노드 10부터 지원한다.
+* for await (변수 of 프로미스배열)
+    * resolve된 프로미스가 변수에 담겨서 나온다.
+    * await을 사용하기 때문에 async 함수 안에서 해야한다.
+```js
+const promise1 = Promise.resolve("성공1");
+const promise2 = Promise.resolve("성공2");
+(async () => {
+    for await (promise of [promise1, promise2]){
+        console.log(promise);
+    }
+})();
+```
+# 10. 프런트엔드 자바스크립트
+## 10-1. AJAX
+* AJAX는 비동기적 웹 서비스를 개발할 때 사용하는 기법이다.
+* 서버로 요청을 보내는 코드
+    * 라이브러리 없이는 브라우저가 지원하는 XMLHttpRequest 객체를 이용한다.(복잡하고, 잘 안쓰인다.)
+    * AJAX 요청 시 Axios 라이브러리를 사용하는 게 편하다.
+    * HTML에 아래 스크립트를 추가하면 사용할 수 있다.
+```html
+<script src="https://unpkg.com/axios/dist/axios.min.js"><script>
+```
 
 
 
