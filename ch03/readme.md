@@ -95,6 +95,164 @@ exports.even = '짝수입니다.';
 ## 4-7. require의 특성
 * ~~꼭 지금 알 필요는 없고, 나중에 하다가 모르겠으면 와도 충분하다.~~
 * require가 제일 위에 올 필요는 없다.
-* require.cache에 한 번
+* require.cache에 한 번 require한 모듈에 대한 캐슁 정보가 들어있다.
+* require.main은 노드 실행 시 첫 모듈을 가리킨다.
+    * require.main으로 어떤 파일을 실행한건지 알아낼 수 있다.
+```js
+console.log('require가 가장 위에 오지 않아도 된다.');
+module.exports = '저를 찾아보세요';
+require('./var.js');
 
+console.log('require.cache입니다.');
+console.log(require.cache);
+console.log('require.main입니다.');
+console.log(require.main === module);
+console.log(require.main.filename);
+```
+* 순환 참조(무한)일 경우 순환 참조되는 대상을 빈 객체로 만든다.
+    * 따라서 구조를 잘 짜야한다.
 
+##  4-8. process
+* 현재 실행중인 노드 프로세스에 대한 정보를 담고 있다.
+    * 컴퓨터마다 출력값이 다를 수 있다.
+```js
+// REPL에 입력
+> process.version
+v14.15.4 // 설치된 노드의 버젼
+> process.arch
+x64 // 프로세스 아키텍처 정보
+> process.platform
+win32   // 운영체제 플랫폼 정보이다.
+> process.pid
+18112   // 현재 프로세스의 아이디이다. 프로세스를 여러 개 가질 때 구분할 수 있다.
+> process.uptime()
+199.36  // 프로세스가 시작된 후 흐른 시간이다. 단위는 초이다.
+> process.execPath
+'C:\\Program Files\\nodejs\\node.exe'   //노드의 경로이다.
+> process.cwd()
+'C:\\Users\\ksy\\Desktop\\Node.js\\ch03\\ex04'  // 현재 프로세스가 실행되는 위치이다.
+> process.cpuUsage()
+{ user: 359000, system: 109000 }    // 현재 cpu 사용량이다.
+```
+### 4-8-1. process.env
+* 시스템 환경 변수들이 들어있는 객체이다
+    * 비밀키(데이터베이스 비밀번호, 서드파티 앱 키등)를 보관하는 용도로도 쓰인다.
+    * 환경 변수는 process.env로 접근이 가능하다.
+    ```js
+    const secretId = process.env.SECRET_ID;
+    const secretCode = process.env.SECRET_CODE;
+    ```
+    * 일부 환경 변수는 노드 실행 시에 영향을 미친다.
+    * ex) NODE_OPTIONS(노드 실행 옵션), UV_THREADPOOL_SIZE(스레드풀 개수)
+        * max-old-space-size는 노드가 사용할 수 있는 메모리를 지정하는 옵션
+
+### 4-8-2. process.nextTick(콜백)
+* 이벤트 루프가 다른 콜백 함수들보다 nextTick의 콜백 함수를 우선적으로 처리한다.
+* 너무 남용하면 다른 콜백 함수들 실행이 늦어진다.
+* 비슷한 경우로 promise가 있다. (nextTick처럼 우선순위가 높다.)
+* 아래 예제에서 setImmediate, setTimeout보다 promise와 nextTick이 먼저 실행된다.
+```js
+setImmediate(() => {
+    console.log('immediate');
+});
+process.nextTick(() => {
+    console.log('nextTick');
+});
+setTimeout(() => {
+    console.log('timeout');
+}, 0);
+Promise.resolve().then(() => console.log('promise');)
+
+//결과
+// nextTick
+// promise
+// timeout
+// immediate
+```
+### 4-8-3. process.exit(코드)
+* 현재의 프로세스를 멈춘다.
+* 코드가 없거나 0이면 정상 종료
+* 이외의 코드는 비정상 종료를 의미한다.
+```js
+//exit.js
+    let i = 1;
+    setInterval(() => {
+        if (i === 5) {
+            console.log('종료!');
+            process.exit();
+        }
+        console.log(i);
+        i += 1;
+    }, 1000);
+// 결과
+// 1
+// 2
+// 3
+// 4
+// 종료!
+```
+# 5. 노드 내장 모듈 사용하기
+* 공식 문서에 모두 나와 있지만 중요하고 자주 사용하는 것들만 소개한다.
+
+## 5-1. os
+* os는 운영체제의 정보를 담고 있다.
+* 모듈은 require로 가져온다. (내장 모듈이기 때문에 경로 대신 이름만 적어줘도 된다.)
+```js
+const os = require('os');
+console.log('운영체제 정보 -----------------------------------');
+console.log(os.arch());         // process.arch와 동일
+console.log(os.platform());     // process.platform과 동일
+console.log(os.type());         // 운영체제의 종류
+console.log(os.uptime());       // 운영체제 부팅 이후 흐른 시간을 보여준다.
+console.log(os.hostname());     // 컴퓨터의 이름을 보여준다.
+console.log(os.release());      // 운영체제의 버전을 보여준다.
+
+console.log('경로---------------------------------------------');
+console.log(os.homedir());      // 홈 디렉터리 경로를 보여준다.
+console.log(os.tmpdir());       // 임시 파일 저장 경로를 보여준다.
+
+console.log('cpu 정보-----------------------------------------');
+console.log(os.cpus());         //  컴퓨터의 코어 정보를 보여준다.
+console.log(os.cpus().length);  //  컴퓨터 코어의 갯수를 보여준다.
+
+console.log('메모리 정보--------------------------------------');
+console.log(os.freemem());      //  사용 가능한 메모리(RAM)를 보여준다.
+console.log(os.totalmem());     //  전체 메모리 용량을 보여준다.
+```
+* nodejs.org에서 API Docs에서 OS를 찾아 볼 수 있다.
+
+## 5-2. path
+* 폴더와 파일의 경로를 쉽게 조작하도록 도와주는 모듈이다.
+* 윈도우와 POSIX 운영체제들은 경로 구분자가 다르다.
+* path 모듈은 그 경로 구분자를 자동으로 바꾸어준다.
+* p.117확인
+```js
+const path = require('path');
+
+const string = __filename;
+
+console.log(path.sep);                  // 경로의 구분자이다.
+console.log(path.delimiter);            // 환경 변수의 구분자 윈도우는(;) POSIX는(:)
+console.log('-------------------------');
+console.log(path.dirname(string));      // path.dirname(경로) : 파일이 위치한 폴더 경로를 보여준다.
+console.log(path.extname(string));      //  파일의 확장자를 보여준다.
+console.log(path.basename(string));     //  path.basename(경로, 확장자) : 파일의 이름(확장자 포함)을 표시한다.
+console.log(path.basename(string, path.extname(string)));   // 파일의 이름만 표시하고 싶으면 두 번째 인수로 파일의 확장자를 넣으면 된다.
+console.log('-------------------------');
+console.log(path.parse(string));        // 파일 경로를 root, dir, base, ext, name 으로 분리한다.
+console.log(path.format({
+  root: 'C:\\',
+  dir: 'C:\\Users\\ksy\\Desktop\\Node.js\\ch03\\ex05',
+  base: 'path.js',
+  ext: '.js',
+  name: 'path'
+}));    // path.parse()한 객체를 파일 경로로 합친다.
+console.log(path.normalize('C:\\\Users\\\\\ksy\\\\Desktop\\\\Node.js\\ch03\\ex05'));    // /나 \를 실수로 여러 번 사용했거나 혼용했을 때 정상적인 경로로 변환한다.
+console.log('-------------------------');
+console.log(path.isAbsolute('C:\\'));   // 파일의 경로가 절대경로이면 true를 반환
+console.log(path.isAbsolute('./home')); // 파일의 경로가 상대경로이면 false를 반환
+console.log('-------------------------');
+console.log(path.relative('C:\\Users\\ksy\\Desktop\\Node.js\\ch03\\ex05', 'C:\\')); // (기준경로, 비교경로) 경로를 두개 넣으면 첫 번째 경로에서 두번째 경로로 가는 방법을 알려줌
+console.log(path.join(__dirname,'..','ex03','var.js')); // 여러 인수를 넣으면 하나의 경로로 합친다.
+console.log(path.resolve(__dirname, '..', '/var.js'));  // join과 비슷하지만 /를 만나면 절대경로로 인식한다.
+```
