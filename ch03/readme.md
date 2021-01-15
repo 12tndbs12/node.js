@@ -485,5 +485,70 @@ fs.watch('./target.txt', (eventType,filename) => {
     * removeListener(이벤트명, 리스너) : 이벤트에 연결된 리스너를 하나씩 제거한다.
     * off(이벤트명, 콜백) : removeListener와 기능이 같다.
     * listenerCount(이벤트명) : 현재 리스너가 몇 개 연결되어 있는지 확인한다.
-    
+
 # 8. 에외 처리하기
+* **예외(Exception)** : 처리하지 못한 에러이다
+    * 노드 스레드를 멈춘다.
+    * 노드는 기본적으로 싱글 스레드이기 때문에 스레드가 멈추면 프로세스가 멈추는 것이다.
+    * 에러 처리는 필수이다.
+* 기본적으로 try catch문으로 예외를 처리한다.
+    * 예외가 발생할 만한 곳을 try catch로 감싼다.
+```js
+setInterval(() => {
+    console.log('시작');
+    try {
+        throw new Error('서버를 고장낸다!');
+    }catch (err) {
+        console.error(err);
+    }
+}, 1000);
+```
+* 노드 비동기 메서드의 에러는 따로 처리하지 않아도 된다.
+    * 콜백 함수에서 에러 객체를 제공한다.
+```js
+const fs = require('fs');
+
+setInterval(() => {
+    fs.unlink('./abcdefg.js', (err) => {
+        if (err) {
+            console.error(err);
+        }
+    });
+}, 1000);
+```
+* 프로미스의 에러는 따로 처리하지 않아도 된다.
+    * 버전이 올라가면 동작이 바뀔 수 있다.
+    * catch를 붙이는 습관을 들이자
+    * 경고가 나타날수 있다.
+```js
+const fs = require('fs').promises;
+
+setInterval(() => {
+    fs.unlink('./abcedfg.js')
+}, 1000);
+```
+* 에러를 한번에 처리하는법
+    * 최후의 수단으로만 사용한다.
+    * 콜백 함수의 동작이 보장되지 않는다.
+    * 따라서 복구 작업용으로 쓰는 것은 부적합하다.
+    * 에러 내용 기록용으로만 쓰는 게 좋다.
+```js
+process.on('uncaughtException', (err) => {
+    console.error('예기치 못한 에러', err);
+});
+setInterval(() => {
+    throw new Error('서버를 고장낸다!');
+}, 1000);
+
+setTimeout(() => {
+    console.log('실행된다.');
+}, 2000);
+```
+# 9. 프로세스 종료하기
+* 윈도우
+    * netstat -ano | findstr 포트
+    * taskkill /pid 프로세스아이디 /f
+
+* 맥/리눅스
+    * lsof -i tcp:포트
+    * kill -9 프로세스아이디
