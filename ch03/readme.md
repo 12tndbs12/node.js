@@ -480,4 +480,10 @@ fs.watch('./target.txt', (eventType,filename) => {
     * on(이벤트명, 콜백) : 이벤트 이름과 이벤트 발생 시의 콜백을 연결한다. 여러개를 달 수도 있다.
     * addListener(이벤트명, 콜백) : on과 기능이 같다.
     * emit(이벤트명) : 이벤트를 호출하는 메서드이다.
-    * once(이벤트명, 콜백) : 한 번만 실행되는 이벤트이다. my
+    * once(이벤트명, 콜백) : 한 번만 실행되는 이벤트이다.
+    * removeAllListener(이벤트명) : 이벤트에 연결된 모든 이벤트 리스너를 제거한다.
+    * removeListener(이벤트명, 리스너) : 이벤트에 연결된 리스너를 하나씩 제거한다.
+    * off(이벤트명, 콜백) : removeListener와 기능이 같다.
+    * listenerCount(이벤트명) : 현재 리스너가 몇 개 연결되어 있는지 확인한다.
+    
+# 8. 에외 처리하기
