@@ -34,6 +34,18 @@
 * npm init이 완료되면 폴더에 package.json이 생성된다.
 * npm run [스크립트명]으로 스크립트를 실행한다.
 * dependencies는 실제 배포까지 쓰이는 패키지를 저장하고
-    * node -i 패키지명
+    * node i 패키지명
 * devDependencies는 개발 할때만 쓰이는 패키지이다.
-    * node -i -D 패키지이름
+    * node i -D 패키지이름
+* 모듈 폴더를 지운뒤에 npm i 를 입력하면 다시 설치된다.
+
+## 2-4. 글로벌 패키지
+* npm install --global 패키지명 또는 npm i -g 패키지명
+    * 모든 프로젝트와 콘솔에서 패키지를 사용할 수 있다.
+```
+콘솔
+> rimraf node_modules   // node_modules 폴더 삭제
+```
+* Error: EPERM: operation not permitted, mkdir 
+    * 허가권 관련 오류시 vs code를 관리자 권한으로 실행하자.
+
