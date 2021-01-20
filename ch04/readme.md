@@ -104,5 +104,70 @@ http.createServer((req, res) => {
     * session.js 참조
 
 # 4. https와 http2
+## 4-1. https
+* 웹 서버에 SSL 암호화를 추가하는 모듈
+    * 오고 가는 데이터를 암호화해서 중간에 다른 사람이 요청을 가로채더라도 내용을 확인할 수 없다.
+    * 요즘에는 https 적용이 필수이다.
+    * Let's Encrypt에서 무료로 발급 가능
+```js
+const https = require('https');
+const fs = require('fs');
 
+https.createServer({
+    cert: fs.readFileSync('도메인 인증서 경로'),
+    key: fs.readFileSync('도메인 비밀키 경로'),
+    ca: [
+        fs.readFileSync('상위 인증서 경로'),
+        fs.readFileSync('상위 인증서 경로'),
+    ],
+}, (req, res) => {
+    res.writeHead(200, {'Content-Type' : 'text/html; charset=utf-8'})
+    res.write('<h1>Hello Node!</h1>');
+    res.end('<p>Hello Server!</p>');
+})
+.listen(443, () => {
+    console.log('443번 포트에서 서버 대기 중입니다!');
+});
+```
+
+## 4-2. http2
+* SSL 암호화와 더불어 최신 HTTP 프로토콜인 http/2를 사용하는 모듈
+    * 요청 및 응답 방식이 기존 http/1.1보다 개선됐다.
+    * 웹의 속도도 개선되었다.
+```js
+const http2 = require('http2');
+const fs = require('fs');
+
+http2.createSecureServer({
+    cert: fs.readFileSync('도메인 인증서 경로'),
+    key: fs.readFileSync('도메인 비밀키 경로'),
+    ca: [
+        fs.readFileSync('상위 인증서 경로'),
+        fs.readFileSync('상위 인증서 경로'),
+    ],
+}, (req, res) => {
+    res.writeHead(200, {'Content-Type' : 'text/html; charset=utf-8'})
+    res.write('<h1>Hello Node!</h1>');
+    res.end('<p>Hello Server!</p>');
+})
+.listen(443, () => {
+    console.log('443번 포트에서 서버 대기 중입니다!');
+});
+```
+# 5. cluster
+## 5-1. cluster
+* 기본적으로 싱글 스레드인 노드가 CPU 코어를 모두 사용할 수 있게 해주는 모듈이다.
+    * 포트를 공유하는 노드 프로세스를 여러 개 둘 수 있다.
+    * 요청이 많이 들어왔을 때 병렬로 실행된 서버의 개수만큼 요총이 분산된다.
+    * 서버에 무리가 덜 간다.
+    * 코어가 8개인 서버가 있을 때 : 보통은 코어 하나만 활용한다.
+    * cluster로 코어 하나당 노드 프로세스 하나를 배정할 수 있다.
+    * 성능이 8배가 되는것은 아니지만 개선이된다.
+    * 단점: 컴퓨터 자원(메모리, 세션 등)을 공유할 수 없다.
+    * Redis 등 별도 서버로 해결한다.
+
+## 5-2. 서버 클러스터링
+* 마스터 프로세스와 워커 프로세스
+    * 마스터 프로세스는 CPU 개수만큼 워커 프로세스를 만든다(worker_threads랑 구조가 비슷하다.)
+    * 요청이 들어오면 워커 프로세스에 고르게 분배한다.
 
