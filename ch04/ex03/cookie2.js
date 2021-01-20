@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const url = require('url');
 const qs = require('querystring');
 
-const parseCookies = (cookie = '') => {
+const parseCookies = (cookie = '') =>
     cookie
         .split(';')
         .map(v => v.split('='))
@@ -11,7 +11,6 @@ const parseCookies = (cookie = '') => {
             acc[k.trim()] = decodeURIComponent(v)
             return acc;
         }, {});
-}
 
 http.createServer(async (req, res) => {
     const cookies = parseCookies(req.headers.cookie);
@@ -37,12 +36,11 @@ http.createServer(async (req, res) => {
             res.writeHead(200, { 'Content-Type' : 'text/html; charset=utf-8'});
             res.end(data);
         } catch (err) {
-            res.writeHead(500, {'Content-Type' : 'text/html; charset=utf-8'});
+            res.writeHead(500, {'Content-Type' : 'text/plain; charset=utf-8'});
             res.end(err.message);
         }
     }
 })
     .listen(8084, () => {
-        console.log('8083번 포트에서 서버 대기 중입니다');
-
+        console.log('8084번 포트에서 서버 대기 중입니다');
     });
