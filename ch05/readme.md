@@ -77,6 +77,31 @@
 ## 4-1. 기타 명령어
 * npm cli document에서 볼 수 있다.
     * <https://docs.npmjs.com/cli/v6/commands>
+* npm outdated: 어떤 패키지에 기능 변화가 생겼는지 알 수 있다.
+    * npm update하면 package.json에 따라 업데이트 된다.
+* npm uninstall 패키지명 : 패키지 삭제
+* npm search 검색어 : npm 패키지를 검색할 수 있다.(npmjs.com에서 검색과 같다.)
+* npm info 패키지명: 패키지의 세부 정보 파악이 가능하다.
+* npm login: npm에 로그인을 하기 위한 명령어이다.(npmjs.com에서 회원가입이 필요하다.)
+* npm whoami: 현재 사용자가 누구인지 알려준다.
+* npm logout : 로그인한 계정을 로그아웃한다.
+* npm version 버전: package.json의 버전을 올린다. (Git에 커밋도 함)
+    * ex) npm version major : 메이저 버전만 올린다.
+* npm deprecate [패키지명][버전] [메시지]: 패키지를 설치할 때 경고 메시지를 띄우게 한다.(오류가 있는 패키지에 적용)
+* npm publish: 자신이 만든 패키지를 배포한다.
+* npm unpublish --force: 자신이 만든 패키지를 배포 중단한다.(배포 후 72시간 내에만 가능하다.)
+* npm ls 패키지명 : 내 프로젝트가 어떤 패키지를 사용하고 있는지 찾고 싶을 때 npm ls를 사용한다.
+
+# 5. 패키지 배포하기
+* npm회원가입
+* 배포할 패키지 작성
+* 배포 시도하기
+
+
+
+
+
+
 
 
 
