@@ -48,4 +48,35 @@
 ```
 * Error: EPERM: operation not permitted, mkdir 
     * 허가권 관련 오류시 vs code를 관리자 권한으로 실행하자.
+* 요즘은 글로벌 설치를 기피한다.
+    * 대신 npm i rimraf -D 처럼 개발자로 설치하고 npx로 대체한다.
+    * ex) npx rimraf node_modules
+
+# 3. 패키지 버전 이해하기
+## 3-1. SemVer 버저닝
+* 노드 패키지의 버전은 SemVer(유의적 버저닝) 방식을 따른다.
+    * Major(주 버전), Minor(부 버전), Patch(수 버전)
+    * 노드에서는 배포를 할 때 항상 버전을 올려야 한다.
+    * Major는 하위 버전과 호환되지 않은 수정 사항이 생겼을 때 올린다.
+    * Minor는 하위 버전과 호환되는 수정 사항이 생겼을 때 올린다.
+    * Patch는 기능에 버그를 해결했을 때 올린다.
+    * ex) "rimraf": "^3.0.2"
+## 3-2 버전 기호 사용하기
+* ^1.1.1: 패키지 업데이트 시 minor 버전까지만 업데이트 된다.(2.0.0버전은 안 됨)
+    * ^1 과 같다.
+* ~1.1.1: 패키지 업데이트 시 patch버전까지만 업데이트 됨(1.2.0버전은 안 됨)
+* >=, <=, >, <는 이상, 이하, 초과, 미만.
+    * 거의 쓰지 않는다.
+* @latest는 최신 버전을 설치하라는 의미이다.
+    * ex) npm i express@latest
+* 실험적인 버전이 존재한다면 @next로 실험적인 버전 설치 가능(불안정함)
+    * ex) npm i express@next
+* 각 버전마다 부가적으로 알파/베타/RC 버전이 존재할 수도 있음(1.1.1-alpha.0, 2.0.0-beta.1, 2.0.0-rc.0)
+
+# 4. 기타 npm 명령어
+## 4-1. 기타 명령어
+* npm cli document에서 볼 수 있다.
+    * <https://docs.npmjs.com/cli/v6/commands>
+
+
 
