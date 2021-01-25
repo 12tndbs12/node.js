@@ -129,7 +129,7 @@ const app = express();
 app.set('port', process.env.PORT || 3000); 
 
 app.use(morgan('dev'));
-app.use('/', express.static(path.join(__dirname, 'public')));
+app.use('/', express.static(path.join(__dirname, 'public')));   // 찾으면 끝 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));    // true 추천 qs, false면 querystring
 app.use(cookieParser(process.env.COOKIE_SECRET));
@@ -165,4 +165,71 @@ COOKIE_SECRET=cookiesecret
     * ex) app.use(morgan('dev'));
     * 개발환경에서는 dev, 배포환경에서는 combined를 애용한다.
     * 더 자세한 로그를 위해 winston 패키지를 사용한다.
-    
+
+## 2-6. static
+* 정적인 파일들을 제공하는 미들웨어이다.
+    * 인수로 정적 파일의 경로를 제공한다.
+    * 파일이 있을 때 fs.readFile로 직접 읽을 필요가 없다.
+    * 요청하는 파일이 없으면 알아서 next를 호출해서 다음 미들웨어로 넘어간다.
+    * 파일을 발견했다면 다음 미들웨어는 실행되지 않는다.
+```js
+app.use('요청 경로', express.static('실제 경로'));
+app.use('/', express.static(path.join(__dirname, 'public')));
+```
+* 컨텐츠 요청 주소와 실제 컨텐츠의 경로를 다르게 만들 수 있다.
+    * 요청 주소 localhost:3000/stylesheets/style.css
+    * 실제 컨텐츠 경로 /public/stylesheets/style.css
+    * 서버의 구조를 파악하기 어려워져서 보안에 도움이 됨
+
+```js
+```
+
+## 2-7. body-parser
+* 요청의 본문을 해석해주는 미들웨어이다.
+    * 폼 데이터나 AJAX 요청의 데이터를 처리한다.
+    * json 미들웨어는 요청 본문이 json인 경우 해석, urlencoded 미들웨어는 폼 요청을 해석한다.
+    * put이나 patch, post 요청 시에 req.body에 프런트에서 온 데이터를 넣어준다.
+```js
+app.use(express.json());
+app.use(express.urlencoded({ extended: false}));
+```
+* 버퍼 데이터나 text 데이터일 때는 body-parser를 직접 설치해야 한다.
+```js
+//콘솔
+npm i body-parser
+// js
+const bodyParser = require('body-parser');
+app.use(bodyParser.raw());      // 버퍼
+app.use(bodyParser.text());     // text
+```
+* multipart 데이터인 경우는 다른 미들웨어를 사용해야 한다.
+    * multer 패키지
+## 2-8. cookie-parser
+* 요청 헤더의 쿠키를 해석해주는 미들웨어이다.
+    * 4-3 cookies.js 참조
+    * parseCookies 함수와 기능이 비슷하다.
+    * req.cookies 안에 쿠키들이 들어있다.
+    * 비밀키로 쿠키 뒤에 서명을 붙여 내 서버가 만든 쿠키임을 검증할 수 있다.
+        * req.signedCookies;
+```js
+app.use(cookieParser(비밀키));
+```
+* 실제 쿠키 옵션들을 넣을 수 있다.
+    * expires, domain, httpOnly, maxAge, path, secure, sameSite 등
+    * 지울 때는 clearCookie로 지운다. (expires와 maxAge를 제외한 옵션들이 일치해야 한다.)
+```js
+req.cookies // {mycookie: 'test'}처럼 쿠키를 가져온다
+// 'Set-Cookie' : `name=${encodeURIComponent(name)}; Expires=${expires.toGMTString()}; HttpOnly; Path=/`,
+res.cookie('name', 'zerocho', {
+    expires: new Date(Date.now() + 900000),
+    httpOnly: true,
+    secure: true,
+});
+// 쿠키 지우기
+res.clearCookie('name', 'zerocho', {
+    httpOnly: true,
+    secure: true,
+});
+```
+
+## 2-9. 
