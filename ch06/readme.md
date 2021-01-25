@@ -51,7 +51,6 @@ const app = express();
 app.set('port', process.env.PORT || 3000);
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));   // index.html에서 파일을 불러온다.
-
 });
 app.listen(app.get('port'), () => {
     console.log(app.get('port'), '번 포트에서 대기중');
@@ -114,4 +113,56 @@ app.use((err, req, res, next) => {
 ## 2-3. 자주 쓰는 미들웨어
 * morgan, cookie-parser, express-session 설치
     * app.use로 장착
-    * 내부에서 알아서 next를 호출해서
+    * 내부에서 알아서 next를 호출해서 다음 미들웨어로 넘어간다.
+    * npm i morgan cookie-parser express-session
+```js
+// app.js
+const express = require('express');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const dotenv = require('dotenv');
+const path = require('path');
+
+dotenv.config();
+const app = express();
+app.set('port', process.env.PORT || 3000); 
+
+app.use(morgan('dev'));
+app.use('/', express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));    // true 추천 qs, false면 querystring
+app.use(cookieParser(process.env.COOKIE_SECRET));
+app.use(session({
+  resave: false,
+  saveUninitialized: false,
+  secret: process.env.COOKIE_SECRET,
+  cookie: {
+    httpOnly: true,
+    secure: false,
+  },
+  name: 'session-cookie',
+}));
+app.use((req, res, next) => {
+  console.log('모든 요청에 다 실행된다.');
+  next();
+});
+...
+```
+```js
+// .env
+COOKIE_SECRET=cookiesecret
+```
+## 2-4. dotenv
+* env 파일을 읽어서 process.env로 만든다.
+    * process.env.COOKIE_SECRET에 cookiesecret 값이 할당됨(키=값 형식)
+    * 비밀 키들을 소스 코드에 그대로 적어두면 소스 코드가 유출되었을 때 비밀 키도 같이 유출되기 때문에 쓴다.
+    * .env 파일에 비밀 키들을 모아두고 .env 파일만 잘 관리하면 된다.
+
+## 2-5. morgan
+* 서버로 들어온 요청과 응답을 기록해주는 미들웨어이다.
+    * 로그로 자세한 정도를 선택할 수 있다. (dev, tiny, short, common, combined)
+    * ex) app.use(morgan('dev'));
+    * 개발환경에서는 dev, 배포환경에서는 combined를 애용한다.
+    * 더 자세한 로그를 위해 winston 패키지를 사용한다.
+    

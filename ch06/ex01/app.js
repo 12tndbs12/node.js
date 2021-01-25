@@ -1,22 +1,20 @@
 const express = require('express');
 const path = require('path');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const app = express();
+
 
 app.set('port', process.env.PORT || 3000); 
 
-app.use((req, res, next) => {
-    console.log('모든 요청에 실행하고싶어요');
-    next();     // 이 함수를 실행하고 다음으로 넘겨준다.
-});     //모든 요청에 실행하고 싶을때
-app.get('/category/:name', (req, res) => {  // 라우트 매개변수
-    res.send('hello wildcard');
-    console.log(`${req.params.name}`);
-});
+app.use(morgan('combined'));
+app.use(cookieParser());
 app.get('/', (req, res, next) => {
-    console.log('GET / 요청에서만 실행됩니다.');
-    next();
-}, (req, res) => {
-    throw new Error('에러는 에러 처리 미들웨어로 갑니다.')
+    req.cookies // {mycookie : 'test'}
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+app.post('/', (req, res) => {
+    res.send('hello express!');
 });
 app.use((req, res, next) => {   // 404 처리 미들웨어 -> 에러보다는 위에 라우터보다 아래
     res.send('404에러');
