@@ -158,7 +158,11 @@ COOKIE_SECRET=cookiesecret
     * process.env.COOKIE_SECRET에 cookiesecret 값이 할당됨(키=값 형식)
     * 비밀 키들을 소스 코드에 그대로 적어두면 소스 코드가 유출되었을 때 비밀 키도 같이 유출되기 때문에 쓴다.
     * .env 파일에 비밀 키들을 모아두고 .env 파일만 잘 관리하면 된다.
-
+    * 깃헙같은곳에 절대 올리지 말자!
+```js
+const dotenv = require('dotenv');
+dotenv.config();        // 최대한 위로
+```
 ## 2-5. morgan
 * 서버로 들어온 요청과 응답을 기록해주는 미들웨어이다.
     * 로그로 자세한 정도를 선택할 수 있다. (dev, tiny, short, common, combined)
@@ -244,7 +248,6 @@ res.clearCookie('name', 'zerocho', {
     * 이를 세션 쿠키 라고 부른다.
     * 안전하게 쿠키를 전송하려면 쿠키에 서명을 추가해야 하고, 쿠키를 서명하는데 secret의 값이 필요하다.
     * cookie-parser의 secret과 같게 설정해야 한다.
-
 ```js
 const session = require('express-session');
 
@@ -327,7 +330,7 @@ app.use('/', (req, res, next) => {
 });
 ```
 ## 2-14. 멀티파트 데이터 형식
-* form 태그의 enctype이 multipart/form-data인 경우
+* 멀티파트 데이터 형식이란 form 태그의 enctype이 multipart/form-data인 경우이다.
     * body-parser로는 요청 본문을 해석할 수 없음
     * multer 패키지 필요
 ```js
@@ -344,6 +347,9 @@ npm i multer
     * storage는 저장할 공간에 대한 정보이다.
     * diskStorage는 하드디스크에 업로드 파일을 저장한다는 것
     * destination은 저장할 경로이다.
+    * done은 첫번째 인수는 보통 null, 두번째 인수에 값을 넣어준다.
+        * 첫번째에 에러가 있다면 에러를 넣는다. 에러를 넣어주면 에러 처리 미들웨어로 넘겨준다.
+        * req나 file의 데이터를 가공해서 done으로 넘기는 형식이다.
     * filename은 저장할 파일명 (파일명+날짜+확장자 형식)
     * limits는 파일 개수나 파일 사이즈를 제한할 수 있다.
     * 실제 서버 운영 시에는 서버 디스크 대신에 S3같은 스토리지 서비스에 저장하는 게 좋음
@@ -354,15 +360,78 @@ const multer = require('multer');
 const upload = multer({
     storage: multer.diskStorage({
         destination(req, file, done){
-            done(null, 'upload/');
+            done(null, 'upload/');  //upload 폴더가 없으면 에러
+
         },
         filename(req, file, done){
             const ext = path.extname(file.originalname);
             done(null, path.basename(file.originalname, ext) + Date.now() + ext);
         },
     }),
+    // 5 메가바이트아래 파일만
     limits: {fileSize: 5 * 1024 * 1024},
 });
 ```
+* upload 폴더가 없으면 에러가 나기 때문에 fs모듈을 사용해서 서버를 시작할 때 생성한다.
+```js
+const fs = require('fs');
+try {
+    fs.readdirSync('uploads');
+} catch (error) {
+    console.error('upload 폴더가 없어 uploads 폴더를 생성합니다.');
+    fs.mkdirSync('uploads');
+}
+```
+## 2-16. multer 미들웨어들
+* single과 none, array, fields 미들웨어 존재
+    * single은 하나의 파일을 업로드 할 때 사용하고, none은 파일은 업로드하지 않을 때 사용한다.
+    * req.file 안에 업로드 정보가 저장된다.
+* array와 fields는 여러 개의 파일을 업로드 할 때 사용한다.
+    * array는 하나의 요청 body 이름 아래 여러 파일이 있는 경우이다.
+    * fields는 여러 개의 요청 body 이름 아래 파일이 하나씩 있는 경우이다.
+    * files 안에 정보들이 배열로 저장되어 있다.
+    * 두 경우 모두 업로드된 이미지 정보가 req.files 아래에 존재한다.
 
+```js
+// 하나만
+app.post('/upload', upload.single('image'), (req, res) => {
+    console.log(req.file, req.body);
+    res.send('ok');
+});
+{
+    fieldname: 'img',
+    originalname: 'nodejs.png',
+    ...
+}
+
+// 멀티
+// <input type="file" name="many" multiple>인 경우
+app.post('/upload', upload.array('many'), (req, res) => {
+    console.log(req.files, req.body);
+    res.send('ok');
+});
+// <input type="file" name="image1">
+// <input type="file" name="image2">
+// <input type="file" name="image3"> 인 경우
+app.post('/upload',
+    upload.fields([{name: 'image1'}, {name: 'image1'}]),
+    (req, res) => {
+        console.log(req.files, req.body);
+        res.send('ok');
+    }
+);
+// form에 enctype="multipart/form-data"지만 파일이 없는 경우
+app.post('/upload', upload.none(), (req, res) => {
+    console.log(req.body);
+    res.send('ok');
+});
+```
+```
+        single ->   이미지 하나는 req.file로 나머지 정보는 req.body로
+        array  ->       
+multer              array, fields는 이미지들은 req.files로 나머지 정보는 req.body로
+        fields ->
+        none ->     모든 정보를 req.body로  
+```
+# 3. Router 객체로 라우터 분리하기
 
