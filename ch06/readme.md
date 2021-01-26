@@ -232,4 +232,93 @@ res.clearCookie('name', 'zerocho', {
 });
 ```
 
-## 2-9. 
+## 2-9. express-session
+* 세션 관리용 미들웨어이다.
+    * req.session 자체가 사용자의 고유한 세션
+    * 세션 쿠키에 대한 설정(secret: 쿠키 암호화, cookie: 세션 쿠키 옵션)
+    * 세션 쿠키는 앞에 s%3A가 붙은 후 암호화되어 프런트에 전송된다.
+    * resave: 요청이 왔을 때 세션에 수정사항이 생기지 않아도 다시 저장할지 여부
+    * saveUninitialized: 세션에 저장할 내역이 없더라도 세션을 저장할지
+    * req.session.save로 수동 저장도 가능하지만 할 일 거의 없
+
+```js
+const session = require('express-session');
+
+app.use(session({
+    resave: false,      //보통 false
+    saveUninitialized: false,       //보통 false
+    secret: 'zerochopassword',
+    cookie: {
+        httpOnly: true,
+        secure: false,
+    }
+    name: 'session-cookie',
+}));
+```
+```js
+req.session.name = 'zerocho'; //세션 등록
+req.sessionID;  // 세션 아이디 확인
+req.session.destroy(); // 세션 모두 제거
+```
+## 2-10. 미들웨어의 특성
+* req, res, next를 매개변수로 가지는 함수이다.
+* 익스프레스 미들웨어들도 다음과 같이 축약이 가능하다.
+    * 순서가 중요하다.
+    * static 미들웨어에서 파일을 찾으면 next를 호출 안 하므로 json, urlencoded, cookieParser는 실행되지 않는다.
+```js
+app.use(
+    morgan('dev'),
+    express.static('/', path.join(__dirname, 'public')),
+    express.json(),
+    express.urlencoded({ extended: false}),
+    cookieParser(process.env.COOKIE_SECRET),
+);
+```
+## 2-11. next
+* next를 호출해야 다음 코드로 넘어간다.
+    * next를 빼면 다음 미들웨어(라우터 미들웨어)로 넘어가지 않기 때문이다.
+    * next에 인수로 값을 넣으면 에러 핸들러로 넘어간다.('route'인 경우는 다음 라우터로 넘어간다.)
+## 2-12. 미들웨어간 데이터 전달하기
+* req나 res 객체 안에 값을 넣어 데이터를 전달 가능하다.
+    * app.set과의 차이점 : app.set은 서버 내내 유지되고, req,res는 요청 하나 동안만 유지된다.
+    * req.body나 req.cookies같은 미들웨어의 데이터와 겹치지 않게 조심하자
+```js
+app.use((req,res,next) => {
+    req.data = '데이터 넣기'
+    next();
+},(req, res, next) => {
+    console.log(req.data);  //데이터 받기
+    next();
+});
+```
+
+## 2-13. 미들웨어 확장하기
+* 미들웨어 안에 미들웨어를 넣는 방법
+    * 아래 두 코드는 동일한 역할이다.
+```js
+app.use(morgan('dev'));
+// 또는
+app.use((req, res, next) => {
+    morgan('dev')(req, res, next);
+});
+```
+* 아래처럼 다양하게 활용이 가능하다.
+```js
+app.use((req, res, next) => {
+    if (process.env.NODE_ENV === 'production') {
+        morgan('combined')(req, res, next);
+    } else {
+        morgan('dev')(req, res, next);
+    }
+});
+```
+* 로그인 한 사람들한테만 static을 사용하고 싶을 때
+```js
+app.use('/', (req, res, next) => {
+    if(req.session.id){
+        express.static(__dirname, 'public')(req, res, next)
+    } else {
+        next();
+    }
+});
+```
