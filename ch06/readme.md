@@ -239,20 +239,24 @@ res.clearCookie('name', 'zerocho', {
     * 세션 쿠키는 앞에 s%3A가 붙은 후 암호화되어 프런트에 전송된다.
     * resave: 요청이 왔을 때 세션에 수정사항이 생기지 않아도 다시 저장할지 여부
     * saveUninitialized: 세션에 저장할 내역이 없더라도 세션을 저장할지
-    * req.session.save로 수동 저장도 가능하지만 할 일 거의 없
+    * req.session.save로 수동 저장도 가능하지만 할 일 거의 없다.
+* express-session은 세션 관리 시 클라이언트에 쿠키를 보낸다.
+    * 이를 세션 쿠키 라고 부른다.
+    * 안전하게 쿠키를 전송하려면 쿠키에 서명을 추가해야 하고, 쿠키를 서명하는데 secret의 값이 필요하다.
+    * cookie-parser의 secret과 같게 설정해야 한다.
 
 ```js
 const session = require('express-session');
 
+app.use(cookieParser('secret code'));
 app.use(session({
     resave: false,      //보통 false
     saveUninitialized: false,       //보통 false
-    secret: 'zerochopassword',
+    secret: 'secret code',
     cookie: {
         httpOnly: true,
         secure: false,
-    }
-    name: 'session-cookie',
+    },
 }));
 ```
 ```js
@@ -322,3 +326,43 @@ app.use('/', (req, res, next) => {
     }
 });
 ```
+## 2-14. 멀티파트 데이터 형식
+* form 태그의 enctype이 multipart/form-data인 경우
+    * body-parser로는 요청 본문을 해석할 수 없음
+    * multer 패키지 필요
+```js
+//콘솔
+npm i multer
+<form action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="image"/>
+    <input type="text" name="title"/>
+    <button type="submit">업로드</button>
+</form>
+```
+## 2-15. multer 설정하기
+* multer 함수를 호출
+    * storage는 저장할 공간에 대한 정보이다.
+    * diskStorage는 하드디스크에 업로드 파일을 저장한다는 것
+    * destination은 저장할 경로이다.
+    * filename은 저장할 파일명 (파일명+날짜+확장자 형식)
+    * limits는 파일 개수나 파일 사이즈를 제한할 수 있다.
+    * 실제 서버 운영 시에는 서버 디스크 대신에 S3같은 스토리지 서비스에 저장하는 게 좋음
+        * Storage 설정만 바꿔주면 된다.
+```js
+const multer = require('multer');
+
+const upload = multer({
+    storage: multer.diskStorage({
+        destination(req, file, done){
+            done(null, 'upload/');
+        },
+        filename(req, file, done){
+            const ext = path.extname(file.originalname);
+            done(null, path.basename(file.originalname, ext) + Date.now() + ext);
+        },
+    }),
+    limits: {fileSize: 5 * 1024 * 1024},
+});
+```
+
+

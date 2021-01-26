@@ -5,7 +5,6 @@ Node.js
 
 
 **프로미스, async/await 다시 공부**
+# 출처 Node.js 교과서
+# Node.js 교과서 참조
 
-
-# 이미 쓰이고 커밋한 파일 이그노어 할때
-* git rm -r --cached 폴더명
