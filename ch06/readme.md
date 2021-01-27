@@ -434,4 +434,294 @@ multer              array, fields는 이미지들은 req.files로 나머지 정�
         none ->     모든 정보를 req.body로  
 ```
 # 3. Router 객체로 라우터 분리하기
+## 3-1. express.Router
+* app.js 에서 app.get 같은 메서드가 라우터 부분이다.
+* app.js가 길어지는 것으르 막을 수 있다.
+* routes 폴더를 만들고 index.js와 user.js를 작성
+* userRouter의 get은 /user와 /가 합쳐져서 GET /user/가 된다.
+    * 만들어진 app.js 와 index.js를 아래 코드처럼 사용
+```js
+const indexRouter = require('./routes');
+const userRouter = require('./routes/user');
+
+app.use('/', indexRouter);
+app.use('/user', userRouter);
+
+app.use((req, res, next) => {
+    res
+        .status(404)
+        .send('Not Found');
+});
+```
+## 3-2. 라우트 매개변수
+* :id를 넣으면 req.params.id로 받을수 있다.
+    * 동적으로 변하는 부분을 라우트 매개변수로 만든다.
+```js
+router.get('/user/:id', (req, res) => {
+    console.log(req.params, req.query);
+});
+```
+    * /user/123?limit=5&skip=10 주소 요청인 경우
+```js
+// 앞은 req.params, 뒤는 req.query (쿼리스트링)
+{ id: 123 } {limit: '5', skip: '10'}
+```
+    * 일반 라우터보다 뒤에 위치해야 한다.
+```js
+router.get('/user/:id', (req, res) => {
+    console.log('얘만 실행된다.');
+});
+router.get('/user/like', (req, res) => {
+    console.log('전혀 실행되지 않는다.');
+});
+```
+## 3-3. 404 미들웨어
+* 요청과 일치하는 라우터가 없는 경우를 대비해 404 라우터를 만들기
+    * 모든 라우터들 뒤에 둬야한다.
+    * 모든 라우터에 걸리는게 없어야 404가 실행
+    * 이게 없으면 단순히 Cannot GET 주소 라는 문자열이 표시된다.
+```js
+app.use((req, res, next) => {
+    res
+        .status(404)
+        .send('Not Found');
+});
+```
+## 3-4. 라우터 그룹화하기
+* 주소는 같지만 메서드가 다른 코드가 있을 때는 router.route로 묶는다
+
+```js
+router.get('/abc', (req, res) => {
+    res.send('GET /abc');
+});
+router.post('/abc', (req, res) => {
+    res.send('GET /abc');
+});
+// 위의 두 코드를
+router.route('/abc')
+    .get('/abc', (req, res) => {
+    res.send('GET /abc');
+})
+    .post('/abc', (req, res) => {
+    res.send('GET /abc');
+});
+```
+# 4. req, res 객체 살펴보기
+## 4-1. req
+* req.app: req 객체를 통해 app 객체에 접근할 수 있습니다. req.app.get('port')와 같은 식으로 사용할 수 있습니다.
+* req.body: body-parser 미들웨어가 만드는 요청의 본문을 해석한 객체입니다.
+* req.cookies: cookie-parser 미들웨어가 만드는 요청의 쿠키를 해석한 객체입니다.
+* req.ip: 요청의 ip 주소가 담겨 있습니다.
+* req.params: 라우트 매개변수에 대한 정보가 담긴 객체입니다.
+* req.query: 쿼리스트링에 대한 정보가 담긴 객체입니다.
+* req.signedCookies: 서명된 쿠키들은 req.cookies 대신 여기에 담겨 있습니다.
+* req.get(헤더 이름): 헤더의 값을 가져오고 싶을 때 사용하는 메서드입니다
+## 4-2. res
+* res.app: req.app처럼 res 객체를 통해 app 객체에 접근할 수 있습니다.
+* res.cookie(키, 값, 옵션): 쿠키를 설정하는 메서드입니다.
+* res.clearCookie(키, 값, 옵션): 쿠키를 제거하는 메서드입니다.
+* res.end(): 데이터 없이 응답을 보냅니다.
+* res.json(JSON): JSON 형식의 응답을 보냅니다.
+* res.redirect(주소): 리다이렉트할 주소와 함께 응답을 보냅니다.
+* res.render(뷰, 데이터): 다음 절에서 다룰 템플릿 엔진을 렌더링해서 응답할 때 사용하는 메서드입니다.
+* res.send(데이터): 데이터와 함께 응답을 보냅니다. 데이터는 문자열일 수도 있고H TML일 수도 있으며, 버퍼일 수도 있고 객체나 배열일 수도 있습니다.
+* res.sendFile(경로): 경로에 위치한 파일을 응답합니다.
+* res.setHeader(헤더, 값): 응답의 헤더를 설정합니다.
+* res.status(코드): 응답 시의 HTTP 상태 코드를 지정합니다.
+
+## 4-3. 기타
+* 메서드 체이닝을 지원한다.
+```js
+res
+    .status(201)
+    .cookie('test', 'test')
+    .redirect('/admin');
+```
+* 응답은 한번만 보내야 한다.
+
+# 5. 템플릿 엔진 사용하기
+* 예제는 Node.js 교과서 6장 확인
+## 5-1. 템플릿 엔진
+* HTML의 정적인 단점을 개선
+    * 반복문, 조건문, 변수 등을 사용할 수 있다.
+    * 동적인 페이지 작성 가능
+    * PHP, JSP와 유사하다.
+## 5-2. PUG(구 Jade)
+* 문법이 Ruby와 비슷해 코드 양이 많이 줄어든다.
+    * HTML과 많이 달라 호불호가 갈린다.
+    * 익스프레스에 app.set으로 퍼그를 연결한다.
+```js
+...
+app.set('port', process.env.PORT || 3003);
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+
+app.use(morgan('dev'));
+...
+```
+## 5-3. Pug - HTML 표현
+```js
+// 퍼그
+doctype html
+html
+    head
+        title = tile
+        link(rel='stylesheet', href='/stylesheets/style.css')
+// HTML
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>익스프레스</title>
+    <link rel='stylesheet' href="/style.css"/>
+    </head>
+</html>
+```
+```js
+// 퍼그
+#login-button
+.post-image
+span#highlight
+p.hidden.full
+// HTML
+<div id="login-button"></div>
+<div class="post-image"></div>
+<span id="highlight"></span>
+<p class="hidden full"></p>
+```
+```js
+// 퍼그
+p Welcome to Express
+button(type='submit') 전송
+// HTML
+<p>Welcome to Express</p>
+<button type="submit">전송</button>
+```
+```js
+// 퍼그
+p
+    | 안녕하세요.
+    | 여러 줄을 입력합니다.
+    br
+    | 태그도 중간에 넣을 수 있습니다.
+// HTML
+<p>
+    안녕하세요. 여러 줄을 입력합니다.
+    <br/>
+    태그도 중간에 넣을 수 있습니다.
+</p>
+```
+```js
+// 퍼그
+style.
+    h1 {
+        font-size: 30px;
+    }
+script.
+    const message = 'Pug';
+    alert(message);
+// HTML
+<style>
+    h1 {
+        font-size: 30px;
+    }
+</style>
+<script>
+    const message = 'Pug';
+    alert(message);
+</script>
+```
+## 5-4. Pug - 변수
+* res.render에서 두 번째 인수 객체에 Pug 변수를 넣음.
+```js
+router.get('/', (req, res, next) => {
+    res.render('index', { title: 'Express' });
+});
+```
+* res.locals 객체에 넣는 것도 가능하다.(미들웨어간 공유됨)
+```js
+router.get('/', (req, res, next) => {
+    res.locals.title = 'Express';
+    res.render('index');
+});
+```
+* =이나 #{}으로 변수 렌더링 가능(= 뒤에는 자바스크립트 문법 사용 가능)
+```js
+// 퍼그
+h1 = title
+p Welcome to #{title}
+button(class=title, type='submit')
+// HTML
+<h1>Express</h1>
+<p>Welcome to Express</p>
+<button class="Express" type="submit">전송</button>
+<input placeholder="Express 연습"/>
+```
+## 5-5. Pug - 파일 내 변수
+* 퍼그 파일 안에서 변수 선언 가능
+    * - 뒤에 자바스크립트 사용
+    * 변수 값을 이스케이프 하지 않을 수도 있음(자동 이스케이프)
+```js
+// 퍼그
+- const node = 'Node.js'
+- const js = 'Javascript'
+p # {node} 와 # {js}
+// HTML
+<p>Node.js와 Javascript</p>
+```
+```js
+// 퍼그
+p= '<strong>이스케이프</strong>'
+p!= '<strong>이스케이프하지 않음</strong>'
+// HTML
+<p>&lt;strong&gt;이스케이프&lt;/strong&gt;</p>
+<p><strong>이스케이프하지 않음</strong></p>
+```
+## 5-6. Pug - 반복문
+* for in이나 each in으로 반복문 돌릴 수 있음
+```js
+// 퍼그
+ul
+    each fruit in ['사과', '배', '오렌지', '바나나', '복숭아']
+    li= fruit
+// HTML
+<ul>
+    <li>사과</li>
+    <li>배</li>
+    <li>오렌지</li>
+    <li>바나나</li>
+    <li>복숭아</li>
+</ul>
+```
+* 값과 인덱스 가져올 수 있음
+```js
+// 퍼그
+ul
+    each fruit, index in ['사과', '배', '오렌지', '바나나', '복숭아']
+    li= (index + 1) + '번째' + fruit
+// HTML
+<ul>
+    <li>1번째 사과</li>
+    <li>2번째 배</li>
+    <li>3번째 오렌지</li>
+    <li>4번째 바나나</li>
+    <li>5번째 복숭아</li>
+</ul>
+```
+## 5-7. Pug - 조건문
+* if else if else문, case when문 사용 가능
+
+## 5-8. Pug - include
+* 퍼그 파일에 다른 퍼그 파일을 넣을 수 있음.
+    * 헤더, 푸터, 내비게이션 등의 공통 부분을 따로 관리할 수 있어 편리
+    * include로 파일 경로 지정
+
+## 5-9. Pug - extends와 block
+* 레이아웃을 정할 수 있음
+    * 공통되는 레이아웃을 따로 관리할 수 있어 좋음, include와도 같이 사용
+
+## 5-10. 넌적스
+* Pug의 문법에 적응되지 않는다면 넌적스를 사용하면 좋음.
+    * Pug를 지우고 Nunjucks 설치
+    * 확장자는 html 또는 njk(view engine을 njk로)
+
 
