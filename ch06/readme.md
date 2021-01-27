@@ -553,6 +553,7 @@ res
 ```js
 ...
 app.set('port', process.env.PORT || 3003);
+// views폴더안의 파일들을 .pug로 만든다.
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
@@ -658,7 +659,7 @@ button(class=title, type='submit')
 ```
 ## 5-5. Pug - 파일 내 변수
 * 퍼그 파일 안에서 변수 선언 가능
-    * - 뒤에 자바스크립트 사용
+    * '-' 뒤에 자바스크립트 사용
     * 변수 값을 이스케이프 하지 않을 수도 있음(자동 이스케이프)
 ```js
 // 퍼그
@@ -723,5 +724,207 @@ ul
 * Pug의 문법에 적응되지 않는다면 넌적스를 사용하면 좋음.
     * Pug를 지우고 Nunjucks 설치
     * 확장자는 html 또는 njk(view engine을 njk로)
+```js
+// 콘솔
+npm i nunjucks
+// view engine을 퍼그 대신 넌적스로 교체한다.
+...
+const nunjucks = require('nunjucks');
+...
+app.set('view engine', 'html');
 
+nunjucks.configure('views', {
+    express: app,
+    watch: true,
+});
+...
+```
+## 5-11. 넌적스 - 변수
+* {{변수}}
+```js
+<h1>{{title}}</h1>
+<p>Welcome to {{title}}</p>
+<button class="{{title}}" type="submit">전송</button>
+<input placeholder="{{title}} 연습"/>
+```
+* 내부 변수 선언 가능 {%set 자바스크립트 구문}
+```html
+<!-- 넌적스 -->
+{% set node = 'Node.js' %}
+{% set js = 'Javascript'%}
+<p>{{node}}와 {{js}}</p>
+<!-- HTML -->
+<p>Node.js와 Javascript</p>
+<!-- 넌적스 -->
+<p>{{'<strong>이스케이프</strong>'}}</p>
+<p>{{'<strong>이스케이프 하지 않음</strong>' | safe}}</p>
+<!-- HTML -->
+<p>&lt;strong&gt;이스케이프&lt;/strong&gt;'</p>
+<p><strong>이스케이프 하지 않음</strong></p>
+```
+## 5-12. 넌적스 - 반복문
+* {% %} 안에 for in 작성(인덱스는 loop 키워드)
+```html
+<!-- 넌적스 -->
+<ul>
+    {% set fruits = ['사과', '배', '오렌지', '바나나', '복숭아']%}
+    {% for item in fruits %}
+    <li>{{item}}</li>
+    {% endfor %}
+</ul>
+<!-- HTML -->
+<ul>
+    <li>사과</li>
+    <li>배</li>
+    <li>오렌지</li>
+    <li>바나나</li>
+    <li>복숭아</li>
+</ul>
+<!-- 넌적스 -->
+<ul>
+    {% set fruits = ['사과', '배', '오렌지', '바나나', '복숭아']%}
+    {% for item in fruits %}
+    <li>{{loop.index}}번째 {{item}}</li>
+    {% endfor %}
+</ul>
+<!-- HTML -->
+<ul>
+    <li>1번째 사과</li>
+    <li>2번째 배</li>
+    <li>3번째 오렌지</li>
+    <li>4번째 바나나</li>
+    <li>5번째 복숭아</li>
+</ul>
+```
 
+## 5-13. 넌적스 - 조건문
+* {% if %} 안에 조건문 작성
+```html
+{% if isLoggedIn %}
+<div>로그인 되었습니다.</div>
+{% else %}
+<div>로그인이 필요합니다.</div>
+{% endif %}
+
+{% if fruit === 'apple'%}
+<p>사과입니다.</p>
+{% elif fruit === 'banana'%}
+<p>바나나입니다.</p>
+{% elif fruit === 'orange'%}
+<p>오렌지입니다.</p>
+{% else %}
+<p>사과도 바나나도 오렌지도 아닙니다.</p>
+{% endif %}
+```
+
+## 5-14. 넌적스 - include
+* 파일이 다른 파일을 불러올 수 있음
+    * include에 파일 경로를 넣어줄 수 있다.
+```js
+// 넌적스
+// header.html
+<header>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+</header>
+// footer.html
+<footer>
+    <div>푸터입니다.</div>
+</footer>
+// main.html
+{% include "header.html"%}
+<main>
+    <h1>메인 파일</h1>
+    <p>다른 파일을 include할 수 있습니다.</p>
+</main>
+{% include "footer.html"%}
+
+// HTML
+<header>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+</header>
+<main>
+    <h1>메인 파일</h1>
+    <p>다른 파일을 include할 수 있습니다.</p>
+</main>
+<footer>
+    <div>푸터입니다.</div>
+</footer>
+```
+## 5-15. 넌적스 - 레이아웃
+* 레이아웃을 정할 수 있음
+    * 공통되는 레이아웃을 따로 관리할 수 있어 좋음, include와도 같이 사용
+```js
+// 넌적스
+// layout.html
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{title}}</title>
+        <link rel="stylesheet" href="/style.css"/>
+        {% block content %}
+        {% endblock %}
+    </head>
+    <body>
+        <header>헤더입니다.</header>
+        {% block content %}
+        {% endblock %}
+        <footer>푸터입니다.</footer>
+        {% block content %}
+        {% endblock %}
+    </body>
+</html>
+// body.html
+{% extends 'layout.html'%}
+
+{% block content %}
+<main>
+    <p>내용입니다.</p>
+</main>
+{% endblock %}
+
+{% block content %}
+    <script src="/main.js"></script>
+{% endblock %}
+// HTML
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{title}}</title>
+        <link rel="stylesheet" href="/style.css"/>
+        
+    </head>
+    <body>
+        <header>헤더입니다.</header>
+        <main>
+            <p>내용입니다.</p>
+        </main>
+        <footer>푸터입니다.</footer>
+        <script src="/main.js"></script>
+    </body>
+</html>
+```
+
+## 5-16. 에러 처리 미들웨어
+* 에러 발생 시 템플릿 엔진과 상관없이 템플릿 엔진 변수를 설정하고 error 템플릿을 렌더링함.
+    * res.locals. 변수명으로도 템플릿 엔진 변수 생성 가능
+    * process.env.NODE_ENV는 개발환경인지 배포환경인지 구분해주는 속성이다.
+```js
+...
+app.use((req, res, next) => {
+    const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
+    error.status = 404;
+    next(error);
+});
+
+app.use((err, req, res, next) => {
+    res.locals.message = err.message;
+    res.locals.error = process.env.NODE_ENV !== 'production'
+        ? err
+        : {};
+    res.status(err.status || 500);
+    res.render('error');
+});
+...
+```
