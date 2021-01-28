@@ -133,3 +133,28 @@ mysql> CREATE TABLE nodejs.comments (
     * 데이터를 일치시키기 위해 사용하는 옵션이다.(CASCADE 대신 SET NULL과 NO ACTION도 있음)
 ## 3-10. 테이블 목록 보기
 * SHOW TALBES;
+# 4. CRUD 작업하기
+## 4-1. CRUD
+* Create, Read, Update, Delete의 두문자어
+    * 데이터베이스에서 가장 많이 하는 작업 4가지
+## 4-2. Create
+* INSERT INTO 테이블명 (컬럼명들) VALUES (값들)
+## 4-3. Read
+* SELECT 컬럼 FROM 테이블명
+    * SELECT * 은 모든 컬럼을 선택한다는 의미
+    * 컬럼만 따로 추리는 것도 가능하다.
+## 4-4. Read 옵션들
+* WHERE로 조건을 주어 선택 가능
+    * AND로 여러가지 조건을 동시에 만족하는 것을 찾는다.
+    * OR로 여러가지 조건 중 하나 이상을 만족하는 것을 찾는다.
+## 4-5. 정렬해서 찾기
+* ORDER BY로 특정 컬럼 값 순서대로 정렬 가능하다.
+    * DESC는 내림차순, ASC는 오름차순
+## 4-6. LIMIT, OFFSET
+* LIMIT으로 조회할 개수를 제한한다.
+* OFFSET으로 앞의 로우들 스킵 가능 (OFFSET 2면 세 번째 것부터 찾음)
+## 4-7. Update
+* 데이터베이스에 있는 데이터를 수정하는 작업
+    * UPDATE 테이블명 SET 컬럼=새값 WHERE 조건
+
+## 4-8. Delete
