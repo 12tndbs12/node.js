@@ -165,4 +165,11 @@ mysql> CREATE TABLE nodejs.comments (
     * ORM: Object Relational Mapping: 객체와 데이터를 매핑(1대1 짝지음)
     * MySQL 외에도 다른 RDB(Maria, Postgre, SQLite, MSSQL)와도 호환된다.
     * 자바스크립트 문법으로 데이터베이스 조작이 가능하다.
-
+## 5-2. 시퀄라이즈 CLI 사용하기
+* 시퀄라이즈 명령어를 사용하기 위해 sequelize-cli를 설치한다.  
+    * mysql2는 MySQL DB가 아닌 드라이버이다.
+* npx sequelize init으로 시퀄라이즈 구조를 생성한다.
+## 5-3. models/index.js 수정
+* 다음과 같이 수정한다.
+    * require(../config/config) 설정 로딩
+    * new Sequelize(옵션들..)로 DB와 연결이 가능하다.
