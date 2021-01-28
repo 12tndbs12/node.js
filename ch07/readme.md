@@ -156,5 +156,13 @@ mysql> CREATE TABLE nodejs.comments (
 ## 4-7. Update
 * 데이터베이스에 있는 데이터를 수정하는 작업
     * UPDATE 테이블명 SET 컬럼=새값 WHERE 조건
-
 ## 4-8. Delete
+* 데이터베이스에 있는 데이터를 삭제하는 작업
+    * DELETE FROM 테이블명 WHERE 조건
+# 5. 시퀄라이즈 사용하기
+## 5-1. 시퀄라이즈 ORM
+* SQL 작업을 쉽게 할 수 있도록 도와주는 라이브러리이다.
+    * ORM: Object Relational Mapping: 객체와 데이터를 매핑(1대1 짝지음)
+    * MySQL 외에도 다른 RDB(Maria, Postgre, SQLite, MSSQL)와도 호환된다.
+    * 자바스크립트 문법으로 데이터베이스 조작이 가능하다.
+
