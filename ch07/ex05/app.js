@@ -3,10 +3,10 @@ const path = require('path');
 const morgan = require('morgan');
 const nunjucks = require('nunjucks');
 
-const { sequelize } = require('./models');
+const { sequelize } = require('./models');  // require('./models/index.js')와 같다.
 const indexRouter = require('./routes');
-const userRouter = require('./routes');
-const commentsRouter = require('./routes');
+const userRouter = require('./routes/users');
+const commentsRouter = require('./routes/comments');
 
 const app = express();
 app.set('port', process.env.PORT || 3001);

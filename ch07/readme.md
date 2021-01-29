@@ -161,6 +161,7 @@ mysql> CREATE TABLE nodejs.comments (
     * DELETE FROM 테이블명 WHERE 조건
 
 # 5. 시퀄라이즈 사용하기
+* 시퀄라이즈는 알아서 id를 기본 키로 연결하기 때문에 id 컬럼은 적어줄 필요가 없다.
 ## 5-1. 시퀄라이즈 ORM
 * SQL 작업을 쉽게 할 수 있도록 도와주는 라이브러리이다.
     * ORM: Object Relational Mapping: 객체와 데이터를 매핑(1대1 짝지음)
@@ -207,6 +208,7 @@ mysql> CREATE TABLE nodejs.comments (
     * paranoid 옵션은 true면 deletedAt(삭제 시간) 컬럼을 만듦, 로우 복구를 위해 완전히 삭제하지 않고 deletedAt에 표시해둠
     * underscored 옵션은 캐멀케이스로 생성되는 컬럼을 스네이크케이스로 생성
     * modelName은 모델 이름, tableName 옵션은 테이블 이름을 설정
+        * 시퀄라이즈는 기본적으로 테이블 이름을 모델 이름을 소문자및 복수형으로 만든 것을 사용한다. ex) 모델 이름: User ,테이블 이름: users
     * charset과 collate는 한글 설정을 위해 필요(이모티콘 넣으려면 utf8mb4로)
 ## 5-9. 댓글 모델 생성하기
 * models 폴더에 comment.js 생성
@@ -275,7 +277,7 @@ const { User } = require('../models');
 User.findAll({
     attributes: ['name', 'age'],
     where: {
-        married: 1,
+        married: true,
         age: { [Op.gt]: 30 },   // and
     },
 });
@@ -286,7 +288,7 @@ const { User } = require('../models');
 User.findAll({
     attributes: ['id', 'name'],
     where: {
-        [Op.or]: [{ married: 0 }, { age: { [Op.gt]: 30 } }],
+        [Op.or]: [{ married: false }, { age: { [Op.gt]: 30 } }],
     },
 });
 
@@ -330,7 +332,100 @@ User.destory({
 });
 ```
 ## 5-15. 관계 쿼리
-* <sequelize.org/master/>
+* 결괏값이 자바스크립트 객체이다.
+```js
+const user = await User.findOne({});
+console.log(user.nick); // 사용자 닉네임
+```
+* include로 JOIN과 비슷한 기능이 수행 가능하다(관계 있는 것을 엮을 수 있다.)
+```js
+const user = await User.findOne({
+    include: [{
+        model: Comment,
+    }]
+});
+console.log(user.Comments); // 사용자 댓글
+``` 
+* 다대다 모델은 다음과 같이 접근 가능
+```js
+db.sequelize.models.PostHashtag
+```
+* get+모델명으로 관계 있는 데이터 로딩 가능
+```js
+const user = await User.findOne({});
+const comments = await user.getComments();
+console.log(comments);  //  사용자 댓글
+```
+* as로 모델명 변경이 가능하다.
+```js
+// 관계를 설정할 때 as로 등록
+db.User.hasMany(db.Comment, {foreignKey: 'commenter', sourceKey: 'id', as: 'Answers'});
+// 쿼리할 때는
+const user = await User.findOne({});
+const comments = await user.getAnswers();
+console.log(comments);  // 사용자 댓글
+```
+* include나 관계 쿼리 메서드에도 where나 attributes
+```js
+const user = await User.findOne({
+    include: [{
+        model: Comment,
+        where: {
+            id: 1,
+        },
+        attributes: ['id'],
+    }]
+});
+// 또는
+const comments = await user.getComments({
+    where:{
+        id: 1,
+    }
+    attributes: ['id'],
+});
+```
+* 생성 쿼리
+```js
+const user = await User.findOne({});
+const comment = await Comment.create();
+await user.addComment(comment);
+// 또는
+await user.addComment(comment.id);
+```
+* 여러 개를 추가할 때는 배열로 추가가 가능하다.
+```js
+const user = await User.findOne({});
+const comment1 = await Comment.create();
+const comment2 = await Comment.create();
+await user.addComment([cocmment1, comment2]);
+```
+* 수정은 set+모델명, 삭제는 remove+모델명
+## 5-16. 관계 쿼리
+* 직접 SQL을 쓸 수 있음
+```js
+const [result, metadata] = await sequelize.query('SELECT * from comments');
+console.log(result);
+```
+## 5-17. 쿼리 수행하기
+* <https://github.com/zerocho/nodejs-book/tree/master/ch7/7.6/learn-sequelize> 프런트 코드 복사
+* 프런트 코드보다는 서버 코드 위주로 보기
+    * 프런트 코드는 서버에 요청을 보내는 AJAX 요청 위주로만 파악
+* users 라우터
+    * 예제 참조
+    * get, post, delete, patch 같은 요청에 대한 라우터 연결
+    * 데이터는 JSON 형식으로 응답
+    * comments 라우터도 마찬가지
+* comments 라우터
+    * 예제 참조
+    
+## 5-18. 서버 접속하기
+* npm start로 서버 시작
+    * localhost:3001 로 접속하면 시퀄라이즈가 수행하는 SQL문이 콘솔에 찍힌다.
+* 이후 글 등록/수정/삭제 해보기
+
+## 5-19. 시퀄라이즈 참조
+* 시퀄라이즈 공식 문서
+* <https://sequelize.org/master/>
 
 
 
