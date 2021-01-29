@@ -170,6 +170,97 @@ mysql> CREATE TABLE nodejs.comments (
     * mysql2는 MySQL DB가 아닌 드라이버이다.
 * npx sequelize init으로 시퀄라이즈 구조를 생성한다.
 ## 5-3. models/index.js 수정
-* 다음과 같이 수정한다.
+* 예제와 같이 수정한다.
     * require(../config/config) 설정 로딩
     * new Sequelize(옵션들..)로 DB와 연결이 가능하다.
+## 5-4. MySQL 연결하기
+* app.js 작성
+    * sequelize.sync로 연결한다.
+## 5-5. config.json 설정하기
+* DB 연결 정보를 넣기
+## 5-6. 연결 테스트하기
+* npm start로 실행해서 SELECT 1+1 AS RESULT가 나오면 연결 성공
+## 5-7. 모델 생성하기
+* 테이블에 대응되는 시퀄라이즈 모델 생성
+* 시퀄라이즈에서 모델이 Mysql에서는 테이블
+* user.js 에서 User는 모델이름
+* 시퀄라이즈는 아이디를 자동으로 생성해준다.
+## 5-8. 모델 옵션들
+* 시퀄라이즈 모델의 자료형은 MySQL의 자료형과 조금 다르다.
+```
+-----------------------------------------
+        MySQL      |      시퀄라이즈
+-----------------------------------------
+    VARCHAR(100)   |      STRING(100)  
+    INT            |      INTEGER
+    TINYINT        |      BOOLEAN
+    DATETIME       |      DATE
+    INT UNSIGNED   |      INTEGER.UNSIGNED
+    NOT NULL       |      allowNull: false
+    UNIQUE         |      unique: true
+    DEFAULT now()  |      defaultValue: Sequelize.NOW
+```
+* define 메서드의 세 번째 인자는 테이블 옵션이다.
+    * timestamps: true면 createdAt(생성 시간), updatedAt(수정 시간) 컬럼을 자동으로 만듦
+    * 예제에서는 직접 created_at 컬럼을 만들었으므로 false로 함
+    * paranoid 옵션은 true면 deletedAt(삭제 시간) 컬럼을 만듦, 로우 복구를 위해 완전히 삭제하지 않고 deletedAt에 표시해둠
+    * underscored 옵션은 캐멀케이스로 생성되는 컬럼을 스네이크케이스로 생성
+    * modelName은 모델 이름, tableName 옵션은 테이블 이름을 설정
+    * charset과 collate는 한글 설정을 위해 필요(이모티콘 넣으려면 utf8mb4로)
+## 5-9. 댓글 모델 생성하기
+* models 폴더에 comment.js 생성
+## 5-10. 댓글 모델 활성화하기
+* index.js에 모델 연결
+    * init으로 sequelize와 연결
+    * associate로 관계를 설정한다.
+## 5-11. 관계 정의하기
+* users 모델과 comments 모델 간의 관계를 정의
+    * 1:N 관계 (사용자 한 명이 댓글 여러 개 작성)
+    * 시퀄라이즈에서는 1:N 관계를 hasMany로 표현한다.(사용자.hasMany(댓글))
+    * 반대의 입장에서는 belongsTo(댓글.belongsTo(사용자))
+    * belongsTo가 있는 테이블에 컬럼이 생김(댓글 테이블에 commenter 컬럼)
+```js
+// user.js
+static associate(db) {
+        db.User.hasMany(db.Comment, { foreignKey: 'commenter', sourceKey: 'id' });
+    }
+// comment.js
+    static associate(db) {
+    db.Comment.belongsTo(db.User, { foreignKey: 'commenter', targetKey: 'id' });
+    }
+```
+## 5-12. 1대1 관계
+* 1대1 관계
+    * 예) 사용자 테이블과 사용자 세부정보 테이블
+```js
+db.User.hasone(db.Info, { foreignKey: 'UserId', sourceKey: 'id' });
+db.Info.belongsTo(db.User, { foreignKey: 'UserId', targetKey: 'id' });
+```
+
+## 5-13. N대M 관계
+* 다대다 관계
+    * 예) 게시글과 헤시태그 테이블
+    * 하나의 게시글이 여러 개의 해시태그를 가질 수 있고 하나의 해시태그가 여러 개의 게시글으르 가질 수 있다.
+    * DB 특성상 다대다 관계는 중간 테이블이 생긴다.
+```js
+db.Post.belongsToMany(db.Hashtag, {through: 'PostHashtag'});    // through는 중간 테이블 이름
+db.Hashtag.belongsToMany(db.Post, {through: 'PostHashtag'});
+```
+## 5-14. 시퀄라이즈 쿼리 알아보기
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
