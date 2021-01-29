@@ -159,6 +159,7 @@ mysql> CREATE TABLE nodejs.comments (
 ## 4-8. Delete
 * 데이터베이스에 있는 데이터를 삭제하는 작업
     * DELETE FROM 테이블명 WHERE 조건
+
 # 5. 시퀄라이즈 사용하기
 ## 5-1. 시퀄라이즈 ORM
 * SQL 작업을 쉽게 할 수 있도록 도와주는 라이브러리이다.
@@ -247,8 +248,89 @@ db.Post.belongsToMany(db.Hashtag, {through: 'PostHashtag'});    // through는 �
 db.Hashtag.belongsToMany(db.Post, {through: 'PostHashtag'});
 ```
 ## 5-14. 시퀄라이즈 쿼리 알아보기
+* 윗 줄이 SQL문, 아랫 줄은 시퀄라이즈 쿼리(자바스크립트)
+* User.create는 promise기 때문에 await이나 .then을 붙여야 결과값을 받을 수 있다.
+```js
+//  INSERT INTO nodejs.users (name, age, married, comment) VALUES ('zero', 24, 0, '자기소개1');
+const { User } = require('../models');
+User.create({
+    name: 'zero',
+    age: 24,
+    married: false,
+    comment: '자기소개1',
+});
+// SELECT * FROM nodejs.users;
+User.findALL({});
+// SELECT name, married FROM nodejs.users;
+User.findAll({
+    attributes: ['name', 'married'],
+});
+```
+* 특수한 기능들인 경우 Sequelize.Op의 연산자를 사용한다(gt, or 등)
+    * gt: > , lt: < , gte: >= , lte: <=
+```js
+// SELECT name, age FROM nodejs.users WHERE married = 1 AND age > 30;
+const { Op } = require('sequelize');
+const { User } = require('../models');
+User.findAll({
+    attributes: ['name', 'age'],
+    where: {
+        married: 1,
+        age: { [Op.gt]: 30 },   // and
+    },
+});
 
+// SELECT id, name FROM users WHERE married = 0 OR age > 30;
+const { Op } = require('sequelize');
+const { User } = require('../models');
+User.findAll({
+    attributes: ['id', 'name'],
+    where: {
+        [Op.or]: [{ married: 0 }, { age: { [Op.gt]: 30 } }],
+    },
+});
 
+// SELCET id, name FROM users ORDER BY age DESC;
+User.findAll({
+    attributes: ['id', 'name'],
+    // 오더는 기본적으로 2차원 배열이다.
+    // order: [['age', 'DESC'], ['createdAt', 'asc']],
+    // 첫번째인 age는 1순위 정렬, 두번째인 createdAt은 2순위 정렬이다.
+    order: [['age', 'DESC']],
+});
+
+// SELCET id, name FROM users ORDER BY age DESC LIMIT 1;
+User.findAll({
+    attributes: ['id', 'name'],
+    order: [['age', 'DESC']],
+    limit: 1,
+});
+// SELCET id, name FROM users ORDER BY age DESC LIMIT 1 OFFSET 1;
+User.findAll({
+    attributes: ['id', 'name'],
+    order: [['age', 'DESC']],
+    limit: 1,
+    offset: 1,
+});
+// 수정 UPDATE
+// UPDATE nodejs.users SET comment = '바꿀 내용' WHERE id = 2;
+User.update({
+    comment: '바꿀 내용',
+}, {
+    where: {id: 2},
+});
+// 삭제 DELETE
+// DELETE FROM nodejs.users WHERE id = 2;
+User.destory({
+    where: {id: 2},
+});
+// 아이디가 1,3,5 인 사람을 지울때
+User.destory({
+    where: {id: { [Op.in]: [1,3,5] }},
+});
+```
+## 5-15. 관계 쿼리
+* <sequelize.org/master/>
 
 
 
