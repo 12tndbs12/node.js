@@ -119,6 +119,7 @@ WriteResult({ "nInserted" : 1})
 ```
 * 첫 번째 인수로 조회 조건 입력이 가능하다.
     * $gt나 $or같은 조건 연산자 사용
+    * $gt(초과), $gte(이상), $lt(미만), $lte(이하), $ne(같지 않음), $or(또는), $in(배열 요소 중 하나)등
 ```
 > db.users.find({ age: { $gt: 30}, married: true }, { _id: 0, name: 1, age: 1})
 
@@ -152,3 +153,39 @@ WriteResult({ "nInserted" : 1})
 ```
 > db.users.remove({ name: 'nero' });
 ```
+# 5. 몽구스 사용하길
+## 5-1. 몽구스 ODM
+* 몽고디비 작업을 쉽게 할 수 있도록 도와주는 라이브러리이다.
+    * ODM: Object Document Mapping: 객체와 다큐먼트를 매핑(1대1 짝지음)
+    * 몽고디비에 없어 불편한 기능들을 몽구스가 보완
+    * 테이블과 유사한 기능, JOIN 기능 추가
+* 몽구스를 쓰는 이유
+    * 몽고디비에 없어서 불편한 기능들을 몽구스가 보완해준다.
+    * 스카마가 생겼다.
+        * 데이터를 넣기 전에 노드 서버에서 데이터를 한 번 필터링하는 역할을 한다.
+    * MySQL에 있는 JOIN 기능을 populate라는 메서드로 어느 정도 보완한다.
+    
+* 몽구스 예제는 <https://github.com/zerocho/nodejs-book/tree/master/ch8/8.6/learn-mongoose>에 있다.
+    * 프로젝트 세팅 후, 콘솔을 통해 경로로 이동한 후 package.json 설치
+## 5-2. 몽고디비 연결하기
+* 몽구스를 통해 몽고디비 연결하기
+    * 인증은 admin 데이터베이스에서, 서비스는 dbName 데이터베이스에서
+    * 몽고디비는 주소를 사용해서 연결한다.
+        * 주소 형식은 mongodb://[username:password@]host[:port][/[datebase][?options]]
+        * [] 부분은 있어도 되고 없어도 된다.
+        * ex) mongodb:/root:nodejsbook@localhost:27017/adimin
+* schemas/index.js 참조
+## 5-3. 앱과 연결하기
+* app.js로 연결
+    * schemas/index.js의 함수가 실행된다.
+    * mongoose.connect 함수가 몽고디비에 연결을 시도
+    * mongoose.set은 디버깅 모드(모드를 켰을 때 콘솔에 쿼리가 찍힘)
+    * 연결이 끊기면(disconnection) 다시 연결을 시도
+* app.js 참조
+## 5-4. 스키마 정의하기
+* schemas 폴더 안에 작성
+    * MySQL의 테이블처럼 정해진 데이터만 들어갈 수 있게 강제함
+    * type은 자료형, require는 필수 여부 default는 기본값, unique는 고유 여부
+* schemas/user.js, schemas/comment.js 참조
+
+실행부터
