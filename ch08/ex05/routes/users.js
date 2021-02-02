@@ -16,7 +16,7 @@ router.route('/')
     })
     .post(async (req, res, next) => {
         try {
-            const users = await User.create({
+            const user = await User.create({
                 name: req.body.name,
                 age: req.body.age,
                 married: req.body.married,

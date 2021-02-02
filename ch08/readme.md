@@ -188,4 +188,21 @@ WriteResult({ "nInserted" : 1})
     * type은 자료형, require는 필수 여부 default는 기본값, unique는 고유 여부
 * schemas/user.js, schemas/comment.js 참조
 
-실행부터
+## 5-5. 라우터 작성하기
+* 프론트엔드 코드는 서버에 요청을 보내는 AJAX 요청 위주로 보자
+* 서버 코드는 응답을 보내는 라우터 위주로 살펴보기
+* routes 폴더 참조
+## 5-6. 라우터 연결하기
+* app.js에 연결
+```js
+const indexRouter = require('./routes');
+const usersRouter = require('./routes/users');
+const commentsRouter = require('./routes/comments');
+
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+app.use('/comments', commentsRouter);
+```
+## 5-7. 서버 연결하기
+* npm start 후 localhost:3002에 접속
+* f12키 -> network에서 보내는 URL과 방법등 확인 가능

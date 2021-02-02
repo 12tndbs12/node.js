@@ -10,6 +10,7 @@ router.post('/', async (req, res, next) => {
             comment: req.body.comment,
         });
         console.log(comment);
+        // populte 하면 ObjectID 부분을 실제 객체로 바꿔줌
         const result = await Comment.populate(comment, {path: 'commenter'});
         res.status(201).json(result);
     } catch (err) {
