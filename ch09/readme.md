@@ -121,13 +121,17 @@ app.use(passport.session());
     * passport.deserializeUser: req.session에 저장된 사용자 아이디를 바탕으로 DB 조회로 사용자 정보를 얻어낸 후 req.user에 저장
 ```js
 module.exports = () => {
+    // serializeUser는 로그인 시에만 실행
     passport.serializeUser((user, done) => {
         done(null, user.id);    // 세션에 user의 id만 저장
         // done(null, user.email);     세션에 user의 email만 저장
-    }); 
+    });
+    
+    // app.use(passport.session());이 실행될때 실행된다.
+    // deserializeUser는 매 요청 시 실행
     passport.deserializeUser((id, done) => {
         User.findOne({ where: {id} })
-            .then(user => done(null, user))
+            .then(user => done(null, user))     // req.user, req.isAuthenticated()로 불러올 수 있다.
             .catch(err => done(err));
     });
     local();
@@ -154,6 +158,55 @@ module.exports = () => {
     * 로컬 로그인 전략 수립
     * 로그인에만 해당하는 전략이므로 회원가입은 따로 만들어야 함
     * 사용자가 로그인했는지, 하지 않았는지 여부를 체크하는 미들웨어도 만듦
+
+## 3-5. 회원가입 라우터
+* routes/auth.js 작성
+    * bcrypt.hash로 비밀번호 암호화
+    * hash의 두 번째 인수는 암호화 라운드
+    * 라운드가 높을수록 안전하지만 오래 걸림
+    * 적당한 라운드를 찾는 게 좋음
+    * ?error 쿼리스트링으로 1회성 메시지
+
+## 3-6. 로그인 라우터
+* routes/auth.js 작성
+    * passport.authenticate(‘local’): 로컬 전략
+    * 전략을 수행하고 나면 authenticate의 콜백 함수 호출됨
+    * authError: 인증 과정 중 에러,
+    * user: 인증 성공 시 유저 정보
+    * info: 인증 오류에 대한 메시지
+    * 인증이 성공했다면 req.login으로 세션에 유저 정보 저장
+## 3-7. 로컬 전략 작성
+* passport/localStrategy.js 작성
+    * usernameField와 passwordField가 input 태그의 name(body-parser의 req.body)
+    * 사용자가 DB에 저장되어있는지 확인한 후 있다면 비밀번호 비교(bcrypt.compare)
+    * 비밀번호까지 일치한다면 로그인
+
+## 3-8. 카카오 로그인 구현
+* passport/kakaoStrategy.js 작성
+    * clientID에 카카오 앱 아이디 추가
+    * callbackURL: 카카오 로그인 후 카카오가 결과를 전송해줄 URL
+    * accessToken, refreshToken: 로그인 성공 후 카카오가 보내준 토큰(예제에선 사용하지 않음)
+    * profile: 카카오가 보내준 유저 정보
+    * profile의 정보를 바탕으로 회원가입
+
+## 3-9. 카카오 로그인용 라우터 만들기
+* 회원가입과 로그인이 전략에서 동시에 수행된다.
+    * passport.authenticate(‘kakao’)만 하면 됨
+    * /kakao/callback 라우터에서는 인증 성공 시(res.redirect)와 실패 시(failureRedirect) 리다이렉트할 경로 지정
+
+## 3-10. 카카오 로그인 앱 만들기
+*  https://developers.kakao.com에 접속하여 회원가입
+* 애플리케이션 추가하기
+* 앱 생성후 REST API 키를 받아 .env에 저장
+* 플랫폼 -> Web에서 http://localhost:8001 등록
+* Redirect URI는 http://loaclhost:8001/auth/kakao/callback 으로 등록
+* 카카오톡 로그인 버튼을 누르면 카카오 로그인 창으로 전환된다.
+* 계정 동의 후 다시 NodeBird 서비스로 리다이렉트된다.
+
+
+
+
+
 
 
 

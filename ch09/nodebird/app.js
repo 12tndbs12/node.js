@@ -47,6 +47,7 @@ app.use(session({
         secure: false,
     },
 }));
+// 얘네 둘은 app.use(session)보다 아래에 위치해야 한다.
 app.use(passport.initialize());
 app.use(passport.session());
 
