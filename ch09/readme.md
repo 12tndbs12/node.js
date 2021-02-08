@@ -303,8 +303,22 @@ router.get('/', async (req, res, next) => {
     }
 });
 ```
+# 5. 프로젝트 마무리하기
+## 5-1. 팔로잉 기능 구현
+* POST /:id/follow 라우터 추가
+    * /사용자아이디/follow
+    * 사용자 아이디는 req.params.id로 접근
+    * user.addFollowing(사용자아이디)로 팔로잉하는 사람 추가
+* routes/user.js
 
-팔로잉, 팔로워 구현하기 부터
+## 5-2. 팔로잉 기능 구현
+* deserializeUser 수정
+    * req.user.Followers로 팔로워 접근 가능
+    * req.user.Followings로 팔로잉 접근
+    * 단, 목록이 유출되면 안 되므로 팔로워/팔로잉 숫자만 프런트로 전달
+* passport/index.js 참조
+* routes/page.js 참조
+
 
 
 
