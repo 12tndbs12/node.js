@@ -13,7 +13,7 @@ router.post('/:id/follow', isLoggedIn, async (req, res, next) => {
             // addFollowings는 추가, setFollowings는 수정 set은 기존 등록 된거를 다 제거하고 추가한다.
             // removeFollowings는 제거
             // add'별명' 또는 add''
-            await user.addFollowings(parseInt(req.params.id, 10));
+            await user.addFollowing(parseInt(req.params.id, 10));
             res.send('success');
         }else {
             res.status(404).send('no user');

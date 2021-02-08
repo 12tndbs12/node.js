@@ -11,7 +11,7 @@ module.exports = () => {
     // { id: 3, 'connect.sid': s%1345345643653 }
 
     passport.deserializeUser((id, done) => {
-        User.findOne({ 
+        User.findOne({
             where: { id },
             include: [{
                 model: User,
