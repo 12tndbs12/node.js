@@ -42,7 +42,10 @@ router.post('/', isLoggedIn, upload2.none(), async (req, res, next) => {
             img: req.body.url,
             UserId: req.user.id,
         });
-        const hashtags = req.body.content.match(/#[^\s#]*/g);
+        const hashtags = req.body.content.match(/#[^\s#]*/g); //해시태그 정규표현식
+        //  [#노드, #익스프레스]
+        // hashtags.map은 [노드, 익스프레스]로 만든다.
+        // [findorCreate(노드), findOrCreate(익스프레스)]
         if (hashtags) {
             const result = await Promise.all(
                 hashtags.map(tag => {
@@ -50,7 +53,9 @@ router.post('/', isLoggedIn, upload2.none(), async (req, res, next) => {
                         where: { title: tag.slice(1).toLowerCase() },
                     })
                 }),
+                // Hashtag.upsert : update와 insert를 합친거
             );
+            console.log(result);
             await post.addHashtags(result.map(r => r[0]));
         }
         res.redirect('/');

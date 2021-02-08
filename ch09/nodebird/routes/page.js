@@ -1,5 +1,6 @@
 const express = require('express');
-const { Post, User } = require('../models');
+const { isLoggedIn, isNotLoggedIn } = require('./middlewares');
+const { Post, User, Hashtag } = require('../models');
 
 const router = express.Router();
 
@@ -11,11 +12,11 @@ router.use((req, res, next) => {
     next();
 });
 
-router.get('/profile', (req, res) => {
+router.get('/profile', isLoggedIn, (req, res) => {
     res.render('profile', { title: '내 정보 - NodeBird' });
 });
 
-router.get('/join', (req, res) => {
+router.get('/join', isNotLoggedIn, (req, res) => {
     res.render('join', { title: '회원가입 - NodeBird' });
 });
 
@@ -38,4 +39,28 @@ router.get('/', async (req, res, next) => {
     }
 });
 
+// 해시태그
+// GET /hashtag?hashtag=노드 이런식으로 보낼때
+// 프론트에서는 encodeURIComponent로 감싸고
+// 서버쪽에서는 decodeURIComonent로 감싸서 받으면된다.
+router.get('/hashtag', async (req, res, next) => {
+    const query = req.query.hashtag;
+    if (!query) {
+        return res.redirect('/');
+    }
+    try {
+        const hashtag = await Hashtag.findOne({ where: {title: query} });
+        let posts = {};
+        if (hashtag) {
+            posts = await hashtag.getPosts({ include: [{model: User, attributes: ['id', 'nick'] }] });
+        }
+        return res.render('main', {
+            title: `${query} | NodeBird`,
+            twits: posts,
+        });
+    } catch (error) {
+        console.error(error);
+        return next(error);
+    }
+})
 module.exports = router;

@@ -319,6 +319,31 @@ router.get('/', async (req, res, next) => {
 * passport/index.js 참조
 * routes/page.js 참조
 
+## 5-3. 해시태그 검색 기능 추가
+* GET /hashtag 라우터 추가
+    * 해시태그를 먼저 찾고(hashtag)
+    * hashtag.getPosts로 해시태그와 관련된 게시글을 모두 찾음
+    * 찾으면서 include로 게시글 작성자 모델도 같이 가져옴
+* routes/page.js 참조
+
+## 5-4. 업로드한 이미지 제공하기
+* express.static 미들웨어로 uploads 폴더에 저장된 이미지 제공
+    * 프런트엔드에서는 /img/이미지명 주소로 이미지 접근 가능
+* app.js참조
+
+# 핵심 정리
+* 서버는 요청에 응답하는 것이 핵심 임무이다. 요청을 수락하든 거절하든 반드시 응답해야 하는데, 이때 한 번만 응답해야 에러가 발생하지 않는다.
+* 개발 시 서버를 매번 수동으로 재시작하지 않으려면 nodemon사용을 추천
+* dotenv 패키짖와 .env 파일로 유출되면 안 되는 비밀 키를 관리하자
+* 라우터는 routes 폴더엥, 데이터베이스는 models 폴더에, html 파일은 views 폴더에 구분하여 저장하면 프로젝트 규모가 커져도 관리하기 쉽다.
+* 데이터베이스를 구성하기 전에 데이터간 1:1, 1:N, N:M 관계를 잘 파악하자
+* routes/middlewares.js처럼 라우터 내에 미들웨어를 사용할 수 있는 것을 기억하자
+* Passport의 인증 과정을 기억하자. 특히 serializeUser와 deserializeUser가 언제 호출되는지 파악하고 있어야 한다.
+* 프런트엔드 form 태그의 인코딩 방식이 multipart일 때는 multer와 같은 multipart 처리용 패키지를 사용하는 것이 좋다.
+
+# 과제
+* 게시글 삭제, 언팔로우 구현하기
+* 책 스스로해보기 참조
 
 
 
