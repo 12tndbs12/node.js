@@ -1,9 +1,17 @@
 ch06/.env
+
 ch07/ex05/node_modules/
 ch07/ex05/config/
+
 ch08/ex05/node_modules/
 ch08/ex05/.env
+
 ch09/nodebird/node_modules/
 ch09/nodebird/.env
 ch09/nodebird/config
 ch09/nodebird/uploads
+
+ch09/nodebird2/node_modules/
+ch09/nodebird2/.env
+ch09/nodebird2/config
+ch09/nodebird2/uploads
