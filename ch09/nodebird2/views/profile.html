@@ -19,4 +19,14 @@
             {% endif %}
         </div>
     </div>
+    <!-- 수정 -->
+    <div>
+        <form action="/user/profile" method="post">
+            <div class="input-group">
+                <label for="modify-nick">닉네임</label>
+                <input id="modify-nick" type="text" name="nick">
+            </div>
+            <button id="modify-btn" type="submit" class="btn">수정</button>
+        </form>
+    </div>
 {% endblock %}
