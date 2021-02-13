@@ -8,7 +8,7 @@
 
 
 
-# 언팔로우
+# 1. 언팔로우
 * views/main.html에 추가
 ```js
 ...
@@ -66,7 +66,7 @@ router.post('/:id/unfollow', isLoggedIn, async (req, res, next) => {
 ...
 ```
 
-# 프로필 정보 변경하기
+# 2. 프로필 정보 변경하기
 * 닉네임만 변경
 ```js
 // profile.html에 추가
@@ -95,7 +95,24 @@ router.post('/profile', async (req, res, next) => {
     }
 });
 ```
-
+# 3. 좋아요 누르기 및 좋아요 취소하기
+* user.js 참조
+```js
+// models/user.js
+    static associate(db){
+        ...
+        db.User.belongsToMany(db.Post, {through: 'Like'});
+        ...
+    }
+// models/post.js
+    static associate(db){
+        ...
+        db.Post.belongsToMany(db.User, {through: 'Like'});
+        ...
+    }
+```
+# 4. 게시글 삭제하기
+# 5. 매번 데이터베이스를 조회하지 않도록 deserializeUser 캐싱하기
 
 
 

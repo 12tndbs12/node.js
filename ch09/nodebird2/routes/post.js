@@ -3,8 +3,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const { Post, Hashtag } = require('../models');
+const { Post, Hashtag, User } = require('../models');
 const { isLoggedIn } = require('./middlewares');
+const { Router } = require('express');
 
 const router = express.Router();
 
@@ -59,6 +60,28 @@ router.post('/', isLoggedIn, upload2.none(), async (req, res, next) => {
             await post.addHashtags(result.map(r => r[0]));
         }
         res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+
+router.post('/:id/like', async (req, res, next)=> {
+    try {
+        const post = await Post.find({where: {id: req.params.id}});
+        await post.addLike(req.user.id);
+        res.send('OK');
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+
+router.delete('/:id/unlike', async (req, res, next)=> {
+    try {
+        const post = await Post.find({where: {id: req.params.id}});
+        await post.removeLike(req.user.id);
+        res.send('OK');
     } catch (error) {
         console.error(error);
         next(error);

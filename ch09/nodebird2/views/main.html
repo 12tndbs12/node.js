@@ -34,7 +34,15 @@
                         <button class="twit-follow">팔로우하기</button>
                     {% elif followerIdList.includes(twit.User.id) and twit.User.id !== user.id %}
                         <button class="twit-unfollow">팔로우취소</button>
-                        {% endif %}
+                    {% endif %}
+                    {% if user and not like %}
+                        <button class="like">좋아요</button>
+                    {% elif user and like %}
+                        <button class="unlike">좋아요 취소</button>
+                    {% endif %}
+                    {% if user and twit.User.id == user.id %}
+                        <button class="delete">게시글 삭제</button>
+                    {% endif %}
                     <div class="twit-content">{{twit.content}}</div>
                     {% if twit.img %}
                         <div class="twit-img"><img src="{{twit.img}}" alt="섬네일"></div>
@@ -124,5 +132,49 @@
                     }
                 });
             });
+document
+    .querySelectorAll('.like')
+    .forEach(function (tag) {
+        tag.addEventListener('click', function () {
+            // 아이디 받아오기
+            const myId = document.querySelector('#my-id');
+            if (myId) {
+                const userId = tag
+                    .parentNode
+                    .querySelector('.twit-id')
+                    .value;
+                axios
+                    .post(`/post/${twitId}/unfollow`)
+                    .then(() => {
+                        location.reload();
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                    });
+            }
+        });
+    });
+document
+    .querySelectorAll('.unlike')
+    .forEach(function (tag) {
+        tag.addEventListener('click', function () {
+            // 아이디 받아오기
+            const myId = document.querySelector('#my-id');
+            if (myId) {
+                const userId = tag
+                    .parentNode
+                    .querySelector('.twit-id')
+                    .value;
+                axios
+                    .DELETE(`/post/${twitId}/unlike`)
+                    .then(() => {
+                        location.reload();
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                    });
+            }
+        });
+    });
     </script>
 {% endblock %}

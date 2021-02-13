@@ -5,6 +5,7 @@ const { Post, User, Hashtag } = require('../models');
 const router = express.Router();
 
 router.use((req, res, next) => {
+    res.locals.like = req.user && req.twit && twit.Liker.map(l => l.id).include(req.user.id);
     res.locals.user = req.user;
     res.locals.followerCount = req.user ? req.user.Followers.length : 0;
     res.locals.followingCount = req.user ? req.user.Followings.length : 0;
@@ -23,12 +24,16 @@ router.get('/join', isNotLoggedIn, (req, res) => {
 router.get('/', async (req, res, next) => {
     try {
         const posts = await Post.findAll({
-            include: {
+            include: [{
                 model: User,
                 attributes: ['id', 'nick'],
-            },
-            order: [['createdAt', 'DESC']],
+            }, {
+                model: User,
+                attributes: ['id', 'nick'],
+                as: 'Liker',
+            }],
         });
+        console.log(posts);
         res.render('main', {
             title: 'NodeBird',
             twits: posts,
