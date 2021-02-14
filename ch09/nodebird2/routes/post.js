@@ -68,8 +68,14 @@ router.post('/', isLoggedIn, upload2.none(), async (req, res, next) => {
 
 router.post('/:id/like', async (req, res, next)=> {
     try {
-        const post = await Post.find({where: {id: req.params.id}});
-        await post.addLike(req.user.id);
+        const post = await Post.findOne({where: {id: req.params.id}});
+        await post.addLiker(req.user.id);
+        // const twit2 = await post.getLiker({ include: [{model: Post, attributes: ['id'] }] });
+        console.log(twit2);
+        // res.render('main', {
+            // twit: "req.twit and (twit.Liker.map(function(l){return l.id}).include(req.user.id))",
+            // hi: twit2,
+        // });
         res.send('OK');
     } catch (error) {
         console.error(error);
@@ -79,8 +85,11 @@ router.post('/:id/like', async (req, res, next)=> {
 
 router.delete('/:id/unlike', async (req, res, next)=> {
     try {
-        const post = await Post.find({where: {id: req.params.id}});
-        await post.removeLike(req.user.id);
+        const post = await Post.findOne({where: {id: req.params.id}});
+        await post.removeLiker(req.user.id);
+        // res.render('main', {
+        //     twit: post,
+        // });
         res.send('OK');
     } catch (error) {
         console.error(error);

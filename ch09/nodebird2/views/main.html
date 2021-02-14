@@ -30,16 +30,20 @@
                     <input type="hidden" value="{{twit.User.id}}" class="twit-user-id">
                     <input type="hidden" value="{{twit.id}}" class="twit-id">
                     <div class="twit-author">{{twit.User.nick}}</div>
+                    <!-- 팔로우 -->
                     {% if not followerIdList.includes(twit.User.id) and twit.User.id !== user.id %}
                         <button class="twit-follow">팔로우하기</button>
                     {% elif followerIdList.includes(twit.User.id) and twit.User.id !== user.id %}
                         <button class="twit-unfollow">팔로우취소</button>
                     {% endif %}
+                    <!-- 좋아요 -->
+<!-- 
                     {% if user and not like %}
                         <button class="like">좋아요</button>
                     {% elif user and like %}
-                        <button class="unlike">좋아요 취소</button>
+                        <button class="unlike">좋아요 취소</button> -->
                     {% endif %}
+                    {{ likesList }}
                     {% if user and twit.User.id == user.id %}
                         <button class="delete">게시글 삭제</button>
                     {% endif %}
@@ -139,12 +143,12 @@ document
             // 아이디 받아오기
             const myId = document.querySelector('#my-id');
             if (myId) {
-                const userId = tag
+                const twitId = tag
                     .parentNode
                     .querySelector('.twit-id')
                     .value;
                 axios
-                    .post(`/post/${twitId}/unfollow`)
+                    .post(`/post/${twitId}/like`)
                     .then(() => {
                         location.reload();
                     })
@@ -161,7 +165,7 @@ document
             // 아이디 받아오기
             const myId = document.querySelector('#my-id');
             if (myId) {
-                const userId = tag
+                const twitId = tag
                     .parentNode
                     .querySelector('.twit-id')
                     .value;

@@ -5,14 +5,15 @@ const { Post, User, Hashtag } = require('../models');
 const router = express.Router();
 
 router.use((req, res, next) => {
-    res.locals.like = req.user && req.twit && twit.Liker.map(l => l.id).include(req.user.id);
+    // res.locals.like = req.user && req.twit && twit.Liker.map(l => l.id).include(req.user.id);
     res.locals.user = req.user;
     res.locals.followerCount = req.user ? req.user.Followers.length : 0;
     res.locals.followingCount = req.user ? req.user.Followings.length : 0;
     res.locals.followerIdList = req.user ? req.user.Followings.map(f => f.id) : [];
     next();
-});
 
+});
+1
 router.get('/profile', isLoggedIn, (req, res) => {
     res.render('profile', { title: '내 정보 - NodeBird' });
 });
@@ -33,7 +34,6 @@ router.get('/', async (req, res, next) => {
                 as: 'Liker',
             }],
         });
-        console.log(posts);
         res.render('main', {
             title: 'NodeBird',
             twits: posts,
@@ -67,5 +67,5 @@ router.get('/hashtag', async (req, res, next) => {
         console.error(error);
         return next(error);
     }
-})
+});
 module.exports = router;
