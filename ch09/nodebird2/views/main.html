@@ -37,11 +37,11 @@
                         <button class="twit-unfollow">팔로우취소</button>
                     {% endif %}
                     <!-- 좋아요 -->
-<!-- 
+
                     {% if user and not like %}
                         <button class="like">좋아요</button>
                     {% elif user and like %}
-                        <button class="unlike">좋아요 취소</button> -->
+                        <button class="unlike">좋아요 취소</button>
                     {% endif %}
                     {{ likesList }}
                     {% if user and twit.User.id == user.id %}
