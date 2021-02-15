@@ -15,3 +15,7 @@ ch09/nodebird2/node_modules/
 ch09/nodebird2/.env
 ch09/nodebird2/config
 ch09/nodebird2/uploads
+
+ch10/nodebird-api/node_modules/
+ch10/nodebird-api/.env
+ch10/nodebird-api/config
