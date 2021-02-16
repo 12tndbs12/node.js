@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
+const session = require('express-session');
 const morgan = require('morgan');
 const nunjucks = require('nunjucks');
 const dotenv = require('dotenv');

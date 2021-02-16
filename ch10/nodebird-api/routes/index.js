@@ -27,6 +27,7 @@ router.post('/domain', isLoggedIn, async (req, res, next) => {
         UserId: req.user.id,
         host: req.body.host,
         type: req.body.type,
+        // uuid는 키같은거 만들어 줄때 사용한다.
         clientSecret: uuidv4(),
         });
         res.redirect('/');
