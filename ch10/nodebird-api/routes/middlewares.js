@@ -19,6 +19,7 @@ exports.isNotLoggedIn = (req, res, next) => {
 // jwt 토큰 검사 미들웨어
 exports.verifyToken = (req, res, next) => {
     try {
+                        // 토큰 검증메서드 첫번째 인수: 토큰, 두번째 인수: 토큰의 비밀 키
         req.decoded = jwt.verify(req.headers.authorization, process.env.JWT_SECRET);
         return next();
     } catch (error) {

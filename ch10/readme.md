@@ -10,6 +10,7 @@
     * API에 제한을 걸어 일정 횟수 내에서만 가져가게 할 수도 있음.
     * NodeBird에서는 인증된 사용자에게만 정보 제공
     * 크롤링을 하면 관리가 안되지만 API를 사용하면 관리가 가능하다.
+        * 크롤링 : 표면적으로 보이는 웹 사이트의 정보를 일정 주기로 수집해 자제적으로 가공하는 기술이다.
 * 예를 들어, 인스타 그램을 크롤링을 할때 잘못할 경우 디도스가 될 수 있다. 그럴 경우 API를 제공해서 해결한다.
 # 2. 프로젝트 구조 갖추기
 ## 2-1. NodeBird API 폴더 세팅
@@ -31,6 +32,7 @@
     * API를 사용할 도메인(또는 호스트)을 저장하는 모델
     * ENUM type으로 free나 premium만 쓸 수 있게 제한
     * clientSecret은 uuid 타입으로
+        * uuid : 고유한 랜덤 문자열을 만들어 내는데 사용한다.
 ```js
 // domain.js
 ...
@@ -118,7 +120,7 @@ const token = jwt.sign({
     * JWT는 PEM 키를 사용해서 양방향 암호화를 하는 것을 지원함
 
 # 4. 호출 서버 만들기
-## 4-1. API 호출용 서버 만들기
+## 4-1. API 호출용 서버 만들기 
 * nodecat 폴더 만들고 package.json 파일을 만든다.
 ## 4-2. 간단한 폴더 구조 갖추기
 * app.js 파일 생성
@@ -130,9 +132,51 @@ const token = jwt.sign({
     * 세션에 토큰이 저장되어 있지 않으면 POST http://localhost:8002/v1/token 라우터로부터 토큰 발급
     * 이 때 HTTP 요청 본문에 클라이언트 비밀키 동봉
     * 발급에 성공했다면 발급받은 토큰으로 다시 GET https://localhost:8002/v1/test 라우터 접근해서 토큰 테스트
+```js
+router.get('/test', async (req, res, next) => {     //토큰 테스트 라우터
+       try {
+        if (!req.session.jwt) {     // 세션에 토큰이 없으면 토큰 발급 시도
+            const tokenResult = await axios.post(`http://localhost:8002/v1/token`, {
+                clientSecret: process.env.CLIENT_SECRET,
+            });
+            if (tokenResult.data && tokenResult.data.code === 200) {  //토큰 발급 성공
+                req.session.jwt = tokenResult.data.token;   //세션에 토큰 저장
+            }else{  //토큰 발급 실패
+                return res.json(tokenResult.data);  // 발급 실패 사유 응답
+            }
+        }
+        // 발급 받은 토큰 테스트
+        const result = await axios.get('http://localhost:8002/v1/test', {
+            headers: { authorization: req.session.jwt},
+        });
+        return res.json(result.data);
+    } catch (error) {
+        console.error(error);
+        if (error.response.status === 419) { // 토큰 만료 시
+            return res.json(error.response.data);
+        }
+        return next(error);
+    }
+});
+
+```
 ## 4-4. 실제 요청 보내기
 * 서버 시작 후 http://localhost:4000/test로 접속
     * 1분을 기다린 후 다시 접속하면 토큰이 만료되었다는 메시지 뜸
 
 # 5. SNS API 서버 만들기
+## 5-1. NodeBird 데이터 제공하기
+* nodebird-api의 라우터 작성
+    * GET /posts/my 와 GET /posts/hashtag/:title
+## 5-2. NodeBird 데이터 가져오기
+* nodecat의 라우터 작성
+    * 토큰을 발급받고 요청을 보내는 부분을 request 함수로 만들어 둠
+    * 요청은 axios로 보내고 세션 토큰 검사, 재발급까지 같이 수행
+* nodecat/routes/index.js 참조
+## 5-3. 실제 요청 보내기
+* localhost:4000/mypost에 접속하면 게시글 받아옴(NodeBird 서비스에 게시글이 있어야 함)
+* localhost:4000/search/노드 라우터에 접속하면 노드 해시태그 검색
+
+# 6. 사용량 제한 구현하기
+
 
