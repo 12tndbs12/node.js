@@ -6,7 +6,7 @@ const session = require('express-session');
 const morgan = require('morgan');
 const nunjucks = require('nunjucks');
 const dotenv = require('dotenv');
-const cors = require('cors');
+// const cors = require('cors');
 
 dotenv.config();
 const v1 = require('./routes/v1');
@@ -50,9 +50,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 // 기본값
 // app.use(cors());
-app.use(cors({
-    credentials: true,
-}));
+// app.use(cors({
+//     credentials: true,
+// }));
 
 app.use('/v1', v1);
 app.use('/v2', v2);
