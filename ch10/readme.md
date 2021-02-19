@@ -224,6 +224,59 @@ exports.apiLimiter = new RateLimit({
     * nodecat/routes/index.js에 URL변경
 * v1 API를 사용하거나 사용량을 초과하면 에러 발생
 
+# 7. CORS 이해하기
+## 7-1. nodecat 프런트 작성하기
+* 프런트에서 서버의 API를 호출하면 어떻게 될까?
+    * routes/index.js와 views/main.html 작성
+```js
+// routes/index.js
+// 클라이언트가 노출되면 안되기 때문에
+// 프론트로 보내는 키는 따로 만들어 주는게 좋다.
+// 본 예제에서는 간단하게 구현하기 위해 클라이언트 키를 사용
+router.get('/', (req, res) => {
+    res.render('main', {key: process.env.CLIENT_SECRET});
+});
+```
+## 7-2. 프런트에서 요청 보내기
+* localhost:4000에 접속하면 에러 발생
+    * CORS에러
+    * 콘솔에 'Access-Control-Allow-Origin' 에러
+* 요청을 보내는 프런트(localhost:4000), 요청을 받는 서버(localhost:8002)가 다르면 에러 발생(서버에서 서버로 요청을 보낼때는 발생하지 않음)
+    * CORS: Cross-Origin Resource Sharing 문제
+    * POST 대신 OPTIONS 요청을 먼저 보내 서버가 도메인을 허용하는지 미리 체크
+
+## 7-3. CORS 문제 해결 방법
+* Access-Control-Allow-Origin 응답 헤더를 넣어주어야 CORS 문제 해결 가능
+    * res.set 메서드로 직접 넣어주어도 되지만 패키지를 사용하는게 편리
+    * npm i cors
+    * v2 라우터에 적용
+    * credentials: true를 해야 프런트와 백엔드 간에 쿠키가 공유됨
+* 에러는 브라우저(localhost:4000)가 일으키지만 해결을 서버(localhost:8002)에서 해야함
+```js
+// v2.js
+...
+// ''은 모든 주소 허용
+// 'localhost:4000' 노드 캣만 허용
+res.setHeader('Access-Control-Allow-Origin', '');
+
+// nodebird-api/app.js
+// 복잡함 cors 사용
+...
+app.use(cors({
+    // origin: 'localhost:4000',
+    // origin 여러개 허용하고 싶다면
+    // origin: ['localhost:4000', 'localhost:4001'],
+
+    // origin: true, 이렇게 써야 credentials와 같이 쓸수 있다. 공식문서 참조
+    credentials: true,  // 쿠키까지 서로 주고받고 하고싶으면 true
+}));
+...
+```
+
+## 7-4. CORS 적용 확인하기
+* http://localhost:4000에 접속하면 정상적으로 토큰이 발급됨
+* 응답 헤더를 보면 Access-Control-Allow-Origin 헤더가 들어 있음
+* *은 모든 도메인을 허용함을 의미
 
 
 

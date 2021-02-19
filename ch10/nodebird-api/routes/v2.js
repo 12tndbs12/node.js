@@ -30,6 +30,9 @@ router.post('/token', apiLimiter, async (req, res) => {
             expiresIn: '1m',    //1분
             issuer: 'nodebird',
         });
+        // 활용성이 떨어짐
+        // res.setHeader('Access-Control-Allow-Origin', 'localhost:4000');
+        // res.setHeader('Access-Control-Allow-Credentials', 'localhost:4000');
         return res.json({
             code: 200,
             message: '토큰이 발급되었습니다',
