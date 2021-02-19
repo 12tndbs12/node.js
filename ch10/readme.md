@@ -178,5 +178,52 @@ router.get('/test', async (req, res, next) => {     //토큰 테스트 라우터
 * localhost:4000/search/노드 라우터에 접속하면 노드 해시태그 검색
 
 # 6. 사용량 제한 구현하기
+## 6-1. 사용량 제한 구현하기
+* DOS 공격 등을 대비해야 함
+    * DDOS는 DOS가 발전한것
+        * DOS는 한사람이 여러번 새로고침하는것
+        * DDOS는 여러사람이 여러번 새로고침하는것
+    * 일정 시간동안 횟수 제한을 두어 무차별적인 요청을 막을 필요가 있음
+    * nodebird-api에 npm i express-rate-limit
+    * routes/middlewares.js에 apiLimiter 미들웨어 추가
+    * windowMS(기준 시간(몇분간)), max(허용 횟수(최대 한번)), delayMS(호출 간격()), handler(제한 초과 시 콜백)
+    * deprecated 미들웨어는 사용하면 안 되는 라우터에 붙여서 사용 시 경고
+        * 버그가 있거나 새로운 버전이 나온걸 알려주는 라우터
+```js
+exports.apiLimiter = new RateLimit({
+    windowMs: 60 * 1000,    // 1분간
+    max: 10,                // 최대 10번
+    delayMs: 1000,          // 1초의 간격을 두어야함
+    handler(req, res) {     // 어겼을시 발생되는 함수
+        res.status(this.statusCode).json({  //429
+            code: this.statusCode,
+            message: '1분에 한 번만 요청할 수 있습니다.'
+        })
+    }
+});
+```
+## 6-2. 응답 코드 정리
+* 응답 코드를 정리해서 어떤 에러가 발생했는지 알려주기
+    * 일관성이 있으면 된다.
+```
+| 응답 코드 |       메세지      |
+    200     | JSON 데이터입니다.
+    401     | 유효하지 않은 토큰입니다.
+    410     | 새로운 버전이 나왔습니다. 새로운 버전을 사용하세요.
+    419     | 토큰이 만료되었습니다.
+    429     | 1분에 한번만 요청할 수 있습니다.
+    500~    | 기타 서버 에러
+```
+## 6-3. 새 라우터 버전 내놓기
+* 사용량 제한 기능이 추가되어 기존 API와 호환되지 않음
+    * 이런 경우 새로운 버전의 라우터를 내놓으면 됨
+    * v2 라우터 작성(apiLimiter 추가됨)
+    * v1 라우터는 deprecated 처리(router.use로 한 번에 모든 라우터에 적용)
+## 6-4. 새 라우터 실행해보기
+* nodecat의 버전 v2로 바꾸기
+    * nodecat/routes/index.js에 URL변경
+* v1 API를 사용하거나 사용량을 초과하면 에러 발생
+
+
 
 
