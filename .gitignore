@@ -22,3 +22,8 @@ ch10/nodebird-api/config/
 ch10/nodecat/config
 ch10/nodecat/node_modules/
 ch10/nodecat/.env
+
+ch11/nodebird/node_modules/
+ch11/nodebird/.env
+ch11/nodebird/config
+ch11/nodebird/uploads
