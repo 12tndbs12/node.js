@@ -80,3 +80,94 @@ Time:        1.753 s
 Ran all test suites.
 npm ERR! Test failed.  See above for more details.
 ```
+
+# 2. 유닛 테스트
+* 함수안에 다른 함수가 있어도된다.
+* 떼어낼수 있는 하나의 단위를 테스트하는 것을 단위 테스트 또는 유닛 테스트라고 한다.
+## 2-1. middlewares 테스트하기
+* middlewares.test.js 작성하기
+    * 테스트 틀 잡기
+    * describe로 테스트 그룹화 가능
+```js
+const { isLoggedIn, isNotLoggedIn } = require('./middlewares');
+
+// 그룹화
+describe('isLoggedIn', () => {
+    test('로그인되어 있으면 isLoggedIn이 next를 호출해야 한다.', () => {
+        
+    });
+    test('로그인되어 있지 않으면 isLoggedIn이 에러를 응답해야 한다.', () => {
+        
+    });
+});
+describe('isNotLoggedIn', () => {
+    test('로그인되어 있지면 isNotLoggedIn이 에러를 응답해야 한다.', () => {
+        
+    });
+    test('로그인되어 있으면 isNotLoggedIn이 next를 호출해야 한다.', () => {
+        
+    });
+});
+```
+## 2-2. req, res 모킹하기
+* 미들웨어 테스트를 위해 req와 res를 가짜로 만들어주어야 함
+    * 가짜로 만들어주는 행위를 모킹이라고 함.
+    * jest.fn으로 함수 모킹 가능
+```js
+const { isLoggedIn, isNotLoggedIn } = require('./middlewares');
+
+// 그룹화
+describe('isLoggedIn', () => {
+    const res = {
+        status : jest.fn(() => res),
+        send: jest.fn(),
+    };
+    const next = jest.fn();
+    test('로그인되어 있으면 isLoggedIn이 next를 호출해야 한다.', () => {
+        const req = {
+            isAuthenticated: jest.fn(() => true),
+        };
+        isLoggedIn(req,res,next);
+        expect(next).toBeCalledTimes(1);
+    });
+    test('로그인되어 있지 않으면 isLoggedIn이 에러를 응답해야 한다.', () => {
+        const req = {
+            isAuthenticated: jest.fn(() => false),
+        };
+        isLoggedIn(req,res,next);
+        expect(res.status).toBeCalledWith(403);
+        expect(res.send).toBeCalledWith('로그인 필요');
+    });
+});
+...
+```
+## 2-3. expect 메서드
+* expect에는 toEqual 말고도 많은 메서드를 지원한다.
+    * toBeCalledWith로 인수 체크
+    * toBeCalledTimes로 호출 회수 체크
+```js
+...
+describe('isNotLoggedIn', () => {
+    const res = {
+        status : jest.fn(() => res),
+        send: jest.fn(),
+        redirect: jest.fn(),
+    };
+    const next = jest.fn();
+    test('로그인되어 있으면 isNotLoggedIn이 에러를 응답해야 한다.', () => {
+        const req = {
+            isAuthenticated: jest.fn(() => true),
+        };
+        const message = encodeURIComponent('로그인한 상태입니다.');
+        isNotLoggedIn(req,res,next);
+        expect(res.redirect).toBeCalledWith(`/?error=${message}`);
+    });
+    test('로그인되어 있지 않으면 isNotLoggedIn이 next를 호출해야 한다.', () => {
+        const req = {
+            isAuthenticated: jest.fn(() => false),
+        };
+        isNotLoggedIn(req,res,next);
+        expect(next).toBeCalledTimes(1); 
+    });
+});
+```
