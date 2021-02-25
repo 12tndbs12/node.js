@@ -390,3 +390,12 @@ describe('POST /login', () => {
     * 재차 실행하면 실패함
         * 데이터가 중복되기 때문에
 
+## 4-5. afterAll로 정리하기
+* routes/auth.test.js 수정
+    * afterAll은 테스트가 종료된 후에 실행됨
+    * DB 초기화하기
+
+## 4-6. 로그아웃 테스트하기
+* routes/auth.test.js 수정
+    * beforeEacah는 테스트 직전에 실행
+
