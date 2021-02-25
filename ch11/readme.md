@@ -171,3 +171,107 @@ describe('isNotLoggedIn', () => {
     });
 });
 ```
+## 2-4. 라우터 테스트 위해 분리하기
+* 라우터도 미들웨어이므로 분리해서 테스트 가능
+* routes/user.js를 다음과 같이 수정
+* controllers/user.js 생성
+```js
+// routes/user.js
+const express = require('express');
+
+const { isLoggedIn } = require('./middlewares');
+const { addFollowing } = require('../controllers/user');
+
+const router = express.Router();
+
+// POST /user/1/follow
+router.post('/:id/follow', isLoggedIn, addFollowing);
+
+module.exports = router;
+```
+
+## 2-5. 라우터 테스트
+* Controllers/user.test.js 작성하기
+    * 데이터베이스가 없어서 오류가 난다.
+```js
+const { addFollowing } = require('./user');
+
+describe('addFollowing',() => {
+    const req = {
+        user: { id: 1 },
+        params: { id: 2 },
+    };
+    const res = {
+        status : jest.fn(() => res),
+        send: jest.fn(),
+    };
+    const next = jest.fn();
+    
+    test('사용자를 찾아 팔로잉을 추가하고 success를 응답해야 함', async () => {
+        await addFollowing(req, res, next);
+        expect(res.send).toBeCalledWith('success');
+    });
+    test('사용자를 못 찾으면 res.status(404).send(no user)를 호출 함', async () => {
+        await addFollowing(req, res, next);
+        expect(res.status).toBeCalledWith(404);
+        expect(res.send).toBeCalledWith('no user');
+
+    });
+    test('DB에서 에러가 발생하면 next(err) 호출', async () => {
+        const error = '테스트용 에러';
+        await addFollowing(req, res, next);
+        expect(next).toBeCalledWith(error);
+
+    });
+});
+```
+## 2-6. DB 모킹하기
+* Jest를 사용해 모듈 모킹 가능(jest.mock)
+    * 메서드에 mockReturnValue 메서드가 추가되어 리턴값 모킹 가능
+```js
+const { addFollowing } = require('./user');
+// 모킹 require할 모델보다 위에 있어야한다.
+jest.mock('../models/user');
+const User = require('../models/user');
+
+describe('addFollowing',() => {
+    const req = {
+        user: { id: 1 },
+        params: { id: 2 },
+    };
+    const res = {
+        status : jest.fn(() => res),
+        send: jest.fn(),
+    };
+    const next = jest.fn();
+    
+    test('사용자를 찾아 팔로잉을 추가하고 success를 응답해야 함', async () => {
+        // 리턴값을 가짜로 만들어준다. 무조건 mockReturnValue 안의 값이 리턴된다.
+        User.findOne.mockReturnValue(Promise.resolve({ 
+            id: 1, 
+            name: 'zerocho', addFollowings(value) {
+                return Promise.resolve(true);
+            }
+        }));
+        await addFollowing(req, res, next);
+        expect(res.send).toBeCalledWith('success');
+    });
+    test('사용자를 못 찾으면 res.status(404).send(no user)를 호출 함', async () => {
+        User.findOne.mockReturnValue(Promise.resolve(null));
+        await addFollowing(req, res, next);
+        expect(res.status).toBeCalledWith(404);
+        expect(res.send).toBeCalledWith('no user');
+
+    });
+    test('DB에서 에러가 발생하면 next(err) 호출', async () => {
+        const error = '테스트용 에러';
+        // reject하면 try catch애서 catch로 간다.
+        User.findOne.mockReturnValue(Promise.reject(error));
+        await addFollowing(req, res, next);
+        expect(next).toBeCalledWith(error);
+
+    });
+});
+```
+
+
