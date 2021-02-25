@@ -273,5 +273,40 @@ describe('addFollowing',() => {
     });
 });
 ```
+# 3. 테스트 커버리지
+## 3-1. 테스트 커버리지란?
+* 전체 코드 중에서 테스트되고 있는 코드의 비율
+    * 테스트되지 않는 코드의 위치도 알려준다.
+    * jest –coverage
+    * Stmts: 구문
+    * Branch: 분기점
+    * Funcs: 함수
+    * Lines: 줄 수
+* 등록후 콘솔에 npm run coverage
+```js
+// package.json
+{
+  "name": "nodebird",
+  "version": "0.0.1",
+  "description": "익스프레스로 만드는 SNS 서비스",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app",
+    "test" : "jest",
+    // 추가
+    "coverage" : "jest --coverage"
+  },
+...
+```
+
+## 3-2. 테스트 커버리지 올리기
+* models/users.test.js작성
+
+## 3-3. 테스트 커버리지 주의점
+* 모든 코드가 테스트되지 않는데도 커버리지가 100%임
+    * 테스트 커버리지를 맹신할 필요가 없음
+    * 커버리지를 높이는 것이 의미는 있지만 높이는 데 너무 집착할 필요는 없음
+    * 필요한 부분 위주로 올바르게 테스트하는 것이 좋음
+
 
 
