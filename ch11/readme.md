@@ -308,5 +308,85 @@ describe('addFollowing',() => {
     * 커버리지를 높이는 것이 의미는 있지만 높이는 데 너무 집착할 필요는 없음
     * 필요한 부분 위주로 올바르게 테스트하는 것이 좋음
 
+# 4. 통합 테스트
+## 4-1. 통합 테스트 해보기
+* 라우터 하나를 통째로 테스트해 봄(여러 개의 미들웨어, 모듈을 한 번에 테스트).
+    * app.js 분리하기
+        * app.js 맨 아래 listen부분을 지우고 module.exports = app; 추가
+        * server.js를 생성해서 아래와 같이 코딩
+        * package.json에 start부분 수정
+* npm i -D supertest
+* supertest는 요청을 모킹한다.
+    * 가짜 요청을 보내고 가짜 요청을 응답해서 시뮬레이션 한다.
+```js
+// app.js
+...
+// 에러 처리 미들웨어
+app.use((err, req, res, next) => {
+    // 템플릿 엔진에서 message랑 error라는 변수
+    res.locals.message = err.message;
+    res.locals.error = process.env.NODE_ENV !== 'production' ? err : {};
+    res.status(err.status || 500);
+    res.render('error');
+});
 
+module.exports = app;
+```
+```js
+// server.js
+const app = require('./app');
+
+app.listen(app.get('port'), () => {
+    console.log(app.get('port'), '번 포트에서 대기중');
+});
+```
+## 4-2. 테스트용 DB 설정하기
+* 개발/배포용 DB랑 별도로 설정하는 것이 좋음
+    * config/config.json의 test 속성
+    * 콘솔에 npx sequelize db:create --env test
+```js
+// config/config.json
+...
+"test": {
+    "username": "root",
+    "password": "비밀번호",
+    "database": "nodebird_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+...
+```
+## 4-3. 라우터 테스트
+* routes/auth.test.js 작성
+    * beforeAll: 모든 테스트 전에 실행
+    * request(app).post(주소)로 요청
+    * send로 data 전송
+```js
+// routes/auth.test.js
+const request = require('supertest');
+const { sequelize } = require('../models');
+const app = require('../app');
+
+beforeAll(async () => {
+    await sequelize.sync();
+});
+
+describe('POST /login', () => {
+    test('로그인 수행', async (done) => {
+        request(app)
+            .post('/auth/login')
+            .send({
+                email: 'zerocho@gmail.com',
+                password: 'nodejsbook',
+            })
+            .expect('Location', '/')
+            .expect(302, done);
+    })
+});
+```
+## 4-4. 회원 정보부터 만들기
+* routes/auth.test.js 수정
+    * 테스트 실행하면 성공함
+    * 재차 실행하면 실패함
+        * 데이터가 중복되기 때문에
 
