@@ -27,3 +27,6 @@ ch11/nodebird/node_modules/
 ch11/nodebird/.env
 ch11/nodebird/config
 ch11/nodebird/uploads
+
+ch12/gif-chat/node_modules
+ch12/gif-chat/.env

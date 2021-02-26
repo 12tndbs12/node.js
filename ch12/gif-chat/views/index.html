@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GIF 채팅방</title>
+</head>
+<body>
+    <div>F12를 눌러 console 탭과 network 탭을 확인하세요.</div>
+    <script>
+        // WebSocket이라는 객체는 브라우저에서 제공한다.
+        // ws는 포트 공유 가능
+        const webSocket = new WebSocket("ws://localhost:8005");
+        // 서버랑 연결되는 순간 실행됨
+        webSocket.onopen = function () {
+            console.log('서버와 웹소켓 연결 성공!');
+        };
+        // 서버에서 메세지가 오는 순간 실행됨
+        webSocket.onmessage = function (event) {
+            console.log(event.data);
+            webSocket.send('클라이언트에서 서버로 답장을 보냅니다');
+        };
+    </script>
+</body>
+</html>
