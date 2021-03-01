@@ -6,19 +6,20 @@
 </head>
 <body>
     <div>F12를 눌러 console 탭과 network 탭을 확인하세요.</div>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // WebSocket이라는 객체는 브라우저에서 제공한다.
-        // ws는 포트 공유 가능
-        const webSocket = new WebSocket("ws://localhost:8005");
-        // 서버랑 연결되는 순간 실행됨
-        webSocket.onopen = function () {
-            console.log('서버와 웹소켓 연결 성공!');
-        };
-        // 서버에서 메세지가 오는 순간 실행됨
-        webSocket.onmessage = function (event) {
-            console.log(event.data);
-            webSocket.send('클라이언트에서 서버로 답장을 보냅니다');
-        };
+        // 먼저 폴링으로 시작하고 웹소켓이 가능하면 웹소켓으로 시작
+        const socket = io.connect('http://localhost:8005', {
+            // 아래 path는 socket.js의 path와 일치시켜야한다.
+            path: '/socket.io',
+            // 처음부터 웹소켓으로 시도
+            transports: ['websocket'],
+        });
+        // 이벤트 만들기
+        socket.on('news', function (data) {
+            console.log(data);
+            socket.emit('reply', 'Hello Node.JS');
+        });
     </script>
 </body>
 </html>

@@ -143,10 +143,92 @@ module.exports = (server) => {
 
 ## 2-7. 다른 브라우저로도 연결하기
 * 다른 브라우저에서 http://localhost:8005에 접속
-  * 접속한 브라우저(클라이언트)가 두 개라, 서버가 받는 메시지의 양도 두 배가 됨
+    * 접속한 브라우저(클라이언트)가 두 개라, 서버가 받는 메시지의 양도 두 배가 됨
+    * 크롬에서도 시크릿 페이지와 일반 페이지 두개로 가능
 ## 2-8. 클라이언트 하나 종료하기
 * 브라우저를 하나 종료하기
   * 콘솔에 접속 해제 메시지가 뜨고, 메시지의 양이 하나가 됨
   * 편의성을 위해 ws 모듈 대신 Socket.IO 모듈 사용
 
+# 3. Socket.IO 사용하기
+## 3-1. Socket.IO 설치하기
+* npm i socket.io
+    * 채팅방에 적합
+        * 채팅방이 아닌 다른 서비스에는 맞지 않는 경우도 있음, ws에서 직접 구현
+    * ws 패키지 대신 Socket.IO 연결
+    * Socket.IO 패키지를 불러와 익스프레스 서버와 연결. 두 번째 인수는 클라이언트와 연결할 수 있는 경로(/socket.io)
+    * connection 이벤트는 서버와 연결되었을 때 호출, 콜백으로 소켓 객체(socket) 제공
+    * socket.request로 요청 객체에 접근 가능, socket.id로 소켓 고유 아이디 확인 가능
+    * disconnect 이벤트는 연결 종료 시 호출, error는 에러 발생 시 호출
+    * reply는 사용자가 직접 만들 이벤트로 클라이언트에서 reply 이벤트 발생 시 서버에 전달됨
+    * socket.emit으로 메시지 전달. 첫 번째 인수는 이벤트 명, 두 번째 인수가 메시지
+```js
+// socket.js
+const SocketIO = require('socket.io');
 
+module.exports = (server) => {
+    const io = SocketIO(server, {path: '/socket.io'});
+
+    // 웹 소켓 연결 시
+    io.on('connection', (socket) => {
+        const req = socket.request;
+        const ip = req.headers['x-forwared-for'] || req.socket.remoteAddress;
+        console.log('새로운 클라이언트 접속', ip, socket.id, req.ip);
+        // 연결 종료 시
+        socket.on('disconnect', () => { 
+            console.log('클라이언트 접속 해제', ip, socket.id);
+            clearInterval(socket.interval);
+        });
+        // 에러시
+        socket.on('error', (error) => {
+            console.error(error);
+        });
+        // 클라이언트로부터 메세지 수신 시
+        socket.on('reply', (data) => {
+            console.log(data);
+        });
+        // 3초마다 클라이언트로 메세지 전송
+        socket.interval = setInterval(() => {
+            socket.emit('news', 'Hello Socket.IO');
+        }, 3000);
+    });
+};
+```
+## 3-2. 클라이언트에서 메시지 주고 받기
+* index.html 수정
+    * /socket.io/socket.io.js 스크립트를 넣어주어야 함(io 객체 제공)
+    * connect 메서드로 서버 주소로 연결하고 서버의 설정과 같은 path 입력(/socket.io)
+    * 서버 주소가 http 프로토콜임에 유의
+    * news 이벤트 리스너로 서버에서 오는 news 이벤트 대기
+    * socket.emit(‘reply’, 메시지)로 reply 이벤트 발생
+```js
+...
+<div>F12를 눌러 console 탭과 network 탭을 확인하세요.</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    // 아래 path는 socket.js의 path와 일치시켜야한다.
+    const socket = io.connect('http://localhost:8005', {
+        path: '/socket.io',
+        transports: ['websocket'],
+    });
+    socket.on('news', function (data) {
+        console.log(data);
+        socket.emit('reply', 'Hello Node.JS');
+    });
+</script>
+...
+```
+## 3-3. 서버 실행하기
+* http://localhost:8005에 접속
+    * 개발자 도구 Network 탭을 보면 웹소켓과 폴링 연결 둘 다 있음 확인 가능
+    *  Socket.IO는 먼저 폴링 방식으로 연결 후(웹 소켓을 지원하지 않는 브라우저를 위해), 웹 소켓을 사용할 수 있다면 웹 소켓으로 업그레이드
+    * 웹 소켓만 사용하고 싶다면 transports 옵션을 다음과 같이 주면 됨
+```js
+...
+const socket = io.connect('http://localhost:8005', {
+            path: '/socket.io',
+            // 처음부터 웹소켓으로 시도
+            transports: ['websocket'],
+        });
+...
+```
