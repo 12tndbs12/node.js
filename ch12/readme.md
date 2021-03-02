@@ -374,4 +374,194 @@ connect();
     * chat.html에서는 /chat 네임스페이스에 연결
     * join 이벤트(방에 참가할 때 들어왔다는 시스템 메시지 등록)와 exit 이벤트(방에서 나갈 때 나갔다는 시스템 메시지 등록) 연결
     * 프론트쪽 코드는 안봐도 되며, socket.on 부분만 보자
+    * routes/index.js에서 res.render('main');으로 변경
 
+## 4-5. socket.js에 소켓 이벤트 연결
+* socket.js 수정
+    * app.set(‘io’, io);로 라우터에서 io 객체를 쓸 수 있게 저장(req.app.get(‘io’)로 접근 가능)
+    *  io.of는 네임스페이스에 접근하는 메서드
+    * 각각의 네임스페이스에 이벤트를 따로 걸어줄 수 있음
+    * req.headers.referer에 요청 주소가 들어 있음
+    * 요청 주소에서 방 아이디를 추출하여 socket.join으로 방 입장
+    * socket.leave로 방에서 나갈 수 있음
+    * socket.join과 leave는 Socket.IO에서 준비해둔 메서드
+```js
+// socket.js
+const SocketIO = require('socket.io');
+
+module.exports = (server, app) => {
+    const io = SocketIO(server, {path: '/socket.io'});
+    // 라우터에서 소켓io의 객체 사용
+    // req.app.get('io');
+    app.set('io',io);
+    // 네임스페이스
+    const room = io.of('/room');
+    const chat = io.of('/chat');
+
+    // 네임스페이스별로 각각 커넥션 생성
+    room.on('connection', (socket) => {
+        console.log('room 네임스페이스에 접속');
+        socket.on('disconnect', () => {
+            console.log('room 네임스페이스 접속 해제');
+        });
+    });
+
+    chat.on('connection', (socket) => {
+        console.log('chat 네임스페이스에 접속');
+        const req = socket.request;
+        const { headers: { referer }} = req;
+        // 주소에서 roomId를 추출하는 부분
+        const roomId = referer
+            .split('/')[referer.split('/').length -1]
+            .replace(/\?.+/, '');
+        socket.join(roomId);
+    })
+    
+    // 연결 종료 시
+    socket.on('disconnect', () => { 
+        console.log('chat 네임스페이스 접속 해제');
+        socket.leave(roomId);
+    });
+};
+```
+## 4-6. 방 개념 이해하기
+* Socket.IO에서는 io 객체 아래에 네임스페이스와 방이 있음
+    * 기본 네임스페이스는 /
+    * 방은 네임스페이스의 하위 개념
+    * 같은 네임스페이스, 같은 방 안에서만 소통할 수 있음
+```
+Socket.IO       네임스페이스    방
+            ┌   /room
+    io  -   ┤
+            └   /chat       ┬  방 아이디
+                            ├  방 아이디
+                            ├  방 아이디
+                            └  방 아이디
+```                 
+## 4-7. color-hash 적용하기
+* 익명 채팅이므로 방문자에게 고유 컬러 아이디 부여
+    * 세션에 컬러 아이디 저장(req.session.color)
+```js
+// app.js
+...
+const dotenv = require('dotenv');
+const ColorHash = require('color-hash');
+...
+app. use((req, res, next) => {
+    if (!req.session.color) {
+        const colorHash = new ColorHash();
+        req.session.color = colorHash.hex(req.sessionID);
+    }
+    next();
+});
+
+app.use('/', indexRouter);
+...
+// 서버에 담은후
+const server = app.listen(app.get('port'), () => {
+    console.log(app.get('port'), '번 포트에서 대기중');
+});
+// 소켓과 연결
+webSocket(server, app);
+```
+## 먼저 테스트
+* 라우터 만들기
+    * routes/index.js 수정
+```js
+const express = require('express');
+
+// 스키마 가져오기
+const Room = require('../schemas/room');
+const Chat = require('../schemas/chat');
+
+const router = express.Router();
+
+router.get('/', async (req, res, next) => {
+    try {
+        // 모든 방을 찾아서
+        const rooms = await Room.find({});
+        // main에 render
+        res.render('main', { rooms, title: 'GIF 채팅방' });
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+
+router.get('/room', (req, res) => {
+    res.render('room', { title: 'GIF 채팅방 생성'});
+});
+
+router.post('/room', async (req, res, next) => {
+    try {
+        // 방 생성
+        const newRoom = await Room.create({
+            title: req.body.title,
+            max: req.body.max,
+            // 방장은 색깔로 구별
+            owner: req.session.color,
+            password: req.body.password,
+        });
+        // socket.js 에서
+        const io = req.app.get('io');
+        io.of('/room').emit('newRoom', newRoom);
+        // 방 생성후 입장
+        res.redirect(`/room/${newRoom._id}?password=${req.body.password}`);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+
+router.get('/room/:id', async (req, res, next) => {
+    try {
+
+        const room = await Room.findOne({ _id: req.params.id });
+        const io = req.app.get('io');
+        if (!room) {
+            return res.redirect('/?error=존재하지 않는 방입니다.');
+        }
+        if (room.password && room.password !== req.query.password) {
+            return res.redirect('/?error=비밀번호가 틀렸습니다.');
+        }
+        // io.of('/chat').adapter.rooms 안에 방 목록들이 들어있다.
+        const { rooms } = io.of('/chat').adapter;
+        // 인원제한
+        // rooms[req.params.id]는 방 안의 사용자들
+        // rooms[req.params.id].length 방 안의 사용자가 몇 명인지 확인
+        if (rooms && rooms[req.params.id] && room.max <= rooms[req.params.id].length) {
+            return res.redirect('/?error=허용 인원이 초과하였습니다.');
+        }
+        return res.render('chat', {
+            room,
+            title: room.title,
+            chats: [],
+            user: req.session.color,
+        });
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+// 모든 사용작가 채팅방을 나갔을때 2초뒤 폭파
+router.delete('/room/:id', async (req, res, next) => {
+    try {
+        // 방 삭제
+        await Room.remove({ _id: req.params.id });
+        // 채팅 내용 삭제
+        await Chat.remove({ room: req.params.id });
+        res.send('ok');
+        // 먼저 보내서 방 목록 보고 있는 사람들에게서 지우고
+        req.app.get('io').of('/room').emit('removeRoom', req.params.id);
+        // 마지막으로 방 나간 사람에게는 방이 지워지게
+        setTimeout(() => {
+            req.app.get('io').of('/room').emit('removeRoom', req.params.id);
+        }, 2000);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+
+module.exports = router;
+```

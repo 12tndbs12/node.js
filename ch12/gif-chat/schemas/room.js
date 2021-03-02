@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 const roomSchema = new Schema({
     // 방 제목
     title: {
-        type: string,
+        type: String,
         required: true,
     },
     // 방 인원 최대 10명, 최소 2명

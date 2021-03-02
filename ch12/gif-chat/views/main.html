@@ -36,8 +36,9 @@
     </fieldset>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io.connect('http://localhost:8005/room', { // 네임스페이스
-            path: '/socket.io'
+        const socket = io.connect('http://localhost:8005/room', { // room이 네임스페이스
+            path: '/socket.io',
+            transports: ['websocket']
         });
 
         socket.on('newRoom', function (data) { // 새 방 이벤트 시 새 방 생성
