@@ -232,3 +232,146 @@ const socket = io.connect('http://localhost:8005', {
         });
 ...
 ```
+# 4.실시간 GIF 채팅방 만들기
+## 4-1. 프로젝트 구조 갖추기
+* 필요 패키지 설치 후 스키마 작성
+    * color-hash는 익명 닉네임에 컬러를 줄 때 사용
+```
+npm i mongoose multer axios color-hash
+```
+## 4-2. 스키마 생성하기
+* 채팅방 스키마(room.js)와 채팅 스키마(chat.js) 작성
+```js
+// schemas/room.js
+const mongoose = require('mongoose');
+
+const { Schema } = mongoose;
+const roomSchema = new Schema({
+    // 방 제목
+    title: {
+        type: string,
+        required: true,
+    },
+    // 방 인원 최대 10명, 최소 2명
+    max: {
+        type: Number,
+        required: true,
+        default:10,
+        min: 2,
+    },
+    // 방장
+    owner: {
+        type: String,
+        required: true,
+    },
+    password: String,
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+});
+
+module.exports = mongoose.model('Room', roomSchema);
+```
+```js
+// schema/chat.js
+const mongoose = require('mongoose');
+
+const { Schema } = mongoose;
+const { Types: {ObjectId} } = Schema;
+const chatSchma = new Schema({
+    // 방에 대한 오브젝트
+    room: {
+        type: ObjectId,
+        required: true,
+        ref: 'Room',
+    },
+    user: {
+        type: String,
+        required: true,
+    },
+    chat: String,
+    gif: String,
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+});
+
+module.exprots = mongoose.model('chat', chatSchma);
+```
+
+## 4-3. 스키마 연결하기
+* 스키마를 index.js와 연결
+    * 익스프레스와 몽구스를 연결
+    * .env 파일에 비밀키 입력
+```js
+// .env
+COOKIE_SECRET=gifchat
+MONGO_ID=root
+MONGO_PASSWORD=nodejsbook
+```
+```js
+// schemas/index.js
+const mongoose = require('mongoose');
+// .env에 들어있는 MONGO_ID, MONGO_PASSWORD, NODE_ENV를 가져온다
+const {MONGO_ID, MONGO_PASSWORD, NODE_ENV} = process.env;
+// 몽고디비 로그인
+const MONGO_URL = `mongodb://${MONGO_ID}:${MONGO_PASSWORD}@localhost:27017/admin`;
+const connect = () => {
+    // 개발모드일때는 쿼리 기록
+    if (NODE_ENV !== 'production') {
+        mongoose.set('debug', true);
+    }
+    // 몽구스 연결
+    mongoose.connect(MONGO_URL, {
+        dbName: 'gifchat',
+        useNewUrlParser: true,
+        useCreateIndex: true,
+    }, (error) => {
+        if (error) {
+            console.log('몽고디비 연결 에러', error);
+        }else{
+            console.log('몽고디비 연결 성공');
+        }
+    });
+};
+
+mongoose.connection.on('error', (error) => {
+    console.error('몽고디비 연결 에러', error);
+});
+mongoose.connection.on('disconnected', () => {
+    console.error('몽고디비 연결이 끊겼습니다. 연결을 재시도합니다.');
+    connect();
+});
+
+module.exports = connect;
+```
+```js
+// app.js
+...
+const indexRouter = require('./routes');
+// 추가
+const connect = require('./schemas');
+
+const app = express();
+app.set('port', process.env.PORT || 8005);
+app.set('view engine', 'html');
+nunjucks.configure('views', {
+    express: app,
+    watch: true,
+});
+// 추가
+connect();
+```
+
+## 4-4. 프런트엔드 파일 작성
+* https://github.com/ZeroCho/nodejs-book/tree/master/ch12/12.4/gif-chat
+    * views/layout.html, public/main.css, views/main.html, views/room.html, views/chat.html 작성
+    * main.html의 코드에서 io.connect의 주소가 달라졌다는 점에 주목
+    * 주소의 /room은 네임스페이스(같은 네임스페이스끼리만 데이터 전달 가능)
+    * socket에는 newRoom(새 방 생성 시 목록에 방 추가 이벤트)과 removeRoom(방 폭파 시 목록에서 방 제거 이벤트) 이벤트 연결
+    * chat.html에서는 /chat 네임스페이스에 연결
+    * join 이벤트(방에 참가할 때 들어왔다는 시스템 메시지 등록)와 exit 이벤트(방에서 나갈 때 나갔다는 시스템 메시지 등록) 연결
+    * 프론트쪽 코드는 안봐도 되며, socket.on 부분만 보자
+
