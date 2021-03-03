@@ -83,19 +83,31 @@
         div.style.color = data.user;
         document.querySelector('#chat-list').appendChild(div);
     });
-document.querySelector('#chat-form').addEventListener('submit', function (e) {
-    e.preventDefault();
-    if (e.target.chat.value) {
-        axios.post('/room/{{room._id}}/chat', {
-            chat: this.chat.value,
-        })
-        .then(() => {
-            e.target.chat.value = '';
-        })
-        .catch((err) => {
-            console.error(err);
-        });
-    }
-});
+    document.querySelector('#chat-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (e.target.chat.value) {
+            axios.post('/room/{{room._id}}/chat', {
+                chat: this.chat.value,
+            })
+            .then(() => {
+                e.target.chat.value = '';
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+        }
+    });
+    document.querySelector('#gif').addEventListener('change', function (e) {
+        console.log(e.target.files);
+        const formData = new FormData();
+        formData.append('gif', e.target.files[0]);
+        axios.post('/room/{{room._id}}/gif', formData)
+            .then(() => {
+                e.target.file = null;
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+    });
 </script>
 {% endblock %}

@@ -734,3 +734,115 @@ router.post('/room/:id/chat', async (req, res, next) => {
     }
 });
 ```
+## 6-4. 웹 소켓만으로 채팅 구현하기
+* DB를 쓰지 않고도 바로 socket.emit으로 채팅 전송 가능
+    * chat.html, app.js 수정하기
+```js
+// chat.html
+document.querySelector('#chat-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+...
+    socket.emit('chat',{
+        room: '{{room._id}}',
+        user: '{{user}}',
+        chat: e.target.chat.value,
+    });
+    e.target.chat.value = '';
+...
+```
+```js
+// socket.js
+chat.on('connection', (socket) => {
+    ...
+    socket.on('disconnect', () => {
+        ...
+    });
+    socket.on('chat', (data) => {
+        socket.to(data.room).emit(data);
+    });
+});
+```
+## 6-5.기타 Socket.IO API
+* 특정인에게 메세지 보내기(귓속말, 1대1 채팅 등에 사용)
+* 나를 제외한 전체에게 메시지 보내기
+```js
+// 특정인에게 메세지 보내기
+socket.to(소켓 아이디).emit(이벤트,데이터);
+// 나를 제외한 모두에게 메세지 보내기
+socket.broadcast.emit(이벤트, 데이터);
+socket.broadcast.to(방 아이디).emit(이벤트, 데이터);
+```
+## 6-6. GIF 전송 구현
+* 소스 코드 복사하기
+    * chat.html 스크립트 맨 아래에 코드 추가
+    * route/index.js에 아래 코드 추가
+    * app.js에 아래 코드 추가
+    * 이미지 업로드이기 때문에 multer 사용
+    * 이미지 저장 후 파일 경로를 chat 데이터에 뿌림
+    * 이미지를 제공할 static 폴더 연결
+```js
+// chat.html
+...
+document.querySelector('#gif').addEventListener('change', function (e) {
+        console.log(e.target.files);
+        const formData = new FormData();
+        formData.append('gif', e.target.files[0]);
+        axios.post('/room/{{room._id}}/gif', formData)
+            .then(() => {
+                e.target.file = null;
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+    });
+</script>
+```
+```js
+// routes/index.js
+...
+try {
+    fs.readdirSync('uploads');
+} catch (err) {
+    console.error('uploads 폴더가 없어 uploads 폴더를 생성합니다.');
+    fs.mkdirSync('uploads');
+}
+const upload = multer({
+    storage: multer.diskStorage({
+        destination(req, file, done) {
+        done(null, 'uploads/');
+        },
+        filename(req, file, done) {
+            const ext = path.extname(file.originalname);
+            done(null, path.basename(file.originalname, ext) + Date.now() + ext);
+        },
+    }),
+    limits: { fileSize: 5 * 1024 * 1024 },
+});
+router.post('/room/:id/gif', upload.single('gif'), async (req, res, next) => {
+    try {
+      const chat = await Chat.create({
+        room: req.params.id,
+        user: req.session.color,
+        gif: req.file.filename,
+      });
+      req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat);
+      res.send('ok');
+    } catch (error) {
+      console.error(error);
+      next(error);
+    }
+  });
+
+module.exports = router;
+```
+```js
+// app.js
+...
+app.use(express.static(path.join(__dirname, 'public')));
+// 추가
+app.use('/gif', express.static(path.join(__dirname, 'uploads')));
+app.use(express.json());
+...
+```
+## 6-7. GIF 채팅 해보기
+* 다음 장에서는 익명제 대신 로그인한 사용자들 간에 실시간 데이터를 주고 받음
