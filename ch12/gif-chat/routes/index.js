@@ -45,7 +45,6 @@ router.post('/room', async (req, res, next) => {
 
 router.get('/room/:id', async (req, res, next) => {
     try {
-
         const room = await Room.findOne({ _id: req.params.id });
         const io = req.app.get('io');
         if (!room) {
@@ -62,10 +61,11 @@ router.get('/room/:id', async (req, res, next) => {
         if (rooms && rooms[req.params.id] && room.max <= rooms[req.params.id].length) {
             return res.redirect('/?error=허용 인원이 초과하였습니다.');
         }
+        const chats = await Chat.find({ room: room._id }).sort('createdAt');
         return res.render('chat', {
             room,
             title: room.title,
-            chats: [],
+            chats,
             user: req.session.color,
         });
     } catch (error) {
@@ -73,7 +73,7 @@ router.get('/room/:id', async (req, res, next) => {
         next(error);
     }
 });
-// 모든 사용작가 채팅방을 나갔을때 2초뒤 폭파
+// 모든 사용자가 채팅방을 나갔을때 2초뒤 폭파
 router.delete('/room/:id', async (req, res, next) => {
     try {
         // 방 삭제
@@ -87,6 +87,21 @@ router.delete('/room/:id', async (req, res, next) => {
         setTimeout(() => {
             req.app.get('io').of('/room').emit('removeRoom', req.params.id);
         }, 2000);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+
+router.post('/room/:id/chat', async (req, res, next) => {
+    try {
+        const chat = await Chat.create({
+            room: req.params.id,
+            user: req.session.color,
+            chat: req.body.chat,
+        });
+        req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat);
+        res.send('ok');
     } catch (error) {
         console.error(error);
         next(error);

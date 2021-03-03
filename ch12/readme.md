@@ -565,3 +565,172 @@ router.delete('/room/:id', async (req, res, next) => {
 
 module.exports = router;
 ```
+
+# 5. 미들웨어와 소켓 연결하기
+## 5-1. socket.io에서 세션 사용하기
+* app.js 수정 후 Socket.IO 미들웨어로 연결
+    * io.use로 익스프레스 미들웨어를 Socket.io에서 사용 가능
+```js
+nunjucks.configure('views', {
+    express: app,
+    watch: true,
+});
+// app.js
+...
+connect();
+
+const sessionMiddleware = session({
+    resave: false,
+    saveUninitialized: false,
+    secret: process.env.COOKIE_SECRET,
+    cookie: {
+        httpOnly: true,
+        secure: false,
+    },
+});
+...
+// 소켓과 연결
+webSocket(server, app, sessionMiddleware);
+```
+```js
+// socket.js
+const SocketIO = require('socket.io');
+const axios = require('axios');
+
+module.exports = (server, app, sessionMiddleware) => {
+    const io = SocketIO(server, {path: '/socket.io'});
+    app.set('io',io);
+    // 네임스페이스
+    const room = io.of('/room');
+    const chat = io.of('/chat');
+    // socket.request에 적용
+    // socket.request에 쿠키와 세션 생성
+    io.use((socket, next) => {
+        cookieParser(process.env.COOKIE_SECRET)(socket.request, socket.request.res, next);
+        sessionMiddleware(socket.request, socket.request.res, next);
+    });
+...
+```
+
+## 5-2. 방 입장, 퇴장 메시지 전송하기
+* to(방아이디).emit(이벤트, 메시지)로 특정 방에 데이터 전송
+    * 사용자가 0명이면 방 폭파 기능도 추가
+    * socket.adapter.rooms[방아이디]에 방에 들어있는 소켓 아이디 목록이 나옴
+    * .length로 방 인원 파악 가능(정확하지는 않음)
+    * 방 폭파 기능은 익스프레스 라우터로 따로 구현
+    * axios로 라우터에 요청을 보냄
+    * 따로 구현하는 이유는 DB 작업을 라우터에서 처리하는 게 편하기 때문
+```js
+// socket.js
+chat.on('connection', (socket) => {
+        console.log('chat 네임스페이스에 접속');
+        const req = socket.request;
+        const { headers: { referer }} = req;
+        // console.log(req);
+        // 주소에서 roomId를 추출하는 부분
+        const roomId = referer
+            .split('/')[referer.split('/').length -1]
+            .replace(/\?.+/, '');
+        socket.join(roomId);
+        socket.to(roomId).emit('join', {
+            user: 'system',
+            chat: `${req.session.color}님이 입장하셨습니다.`
+        });
+        // 연결 종료 시
+        socket.on('disconnect', () => { 
+            console.log('chat 네임스페이스 접속 해제');
+            socket.leave(roomId);
+            const currentRoom = socket.adapter.rooms[roomId];
+            const userCount = currentRoom ? currentRoom.length : 0;
+            if (userCount === 0) {  // 유저가 0명이면 방 삭제
+                axios.delete(`http://localhost:8005/room/${roomId}`)
+                    .then(() => {
+                        console.log('방 제거 요청 성공');
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    })
+            } else {
+                socket.to(roomId).emit('exit', {
+                    user: 'system',
+                    chat: `${req.session.color}님이 퇴장하셨습니다.`,
+                })
+            }
+        });
+    })
+```
+## 5-3. 라우터 작성하기
+* 소스 코드는 https://github.com/ZeroCho/nodejs-book/tree/master/ch12/12.6/gif-chat
+    * routes/index.js 작성
+    * GET /: 메인 페이지(방 목록) 접속 라우터
+    * GET /room: 방 생성 화면 라우터
+    * POST /room: 방 생성 요청 라우터
+    * GET  /room/:id 방 입장 라우터
+    * DELETE /room/:id 방 제거 라우터
+    * req.app.get(‘io’)로 io 객체 불러옴
+    * io.of(네임스페이스).adapter[방아이디]로 방에 들어있는 소켓 내역을 확인할 수 있음
+    * .length로 방 인원 확인 가능
+    * 방 최대 인원보다 작은 경우에 접속 가능함
+## 5-4. 방 생성하기
+* 몽고디비와 서버 모두 실행
+    * 브라우저 두 개를 띄워 http://localhost:8005에 접속
+    * 두 명이 접속한 것과 같은 효과
+    * 방을 생성해보기
+# 6. 채팅 구현하기
+## 6-1. 채팅 소켓 이벤트 리스너 붙이기
+* https://github.com/ZeroCho/nodejs-book/blob/master/ch12/12.6/gif-chat/views/chat.html 수정
+    * chat 이벤트 리스너를 추가함. 채팅 메시지가 웹 소켓으로 전송될 때 호출됨
+    * event.data.user(채팅 발송자)에 따라 다르게 렌더링
+## 6-2. 방에 접속하는 라우터 만들기
+* 접속 가능한 경우 채팅을 불러와 렌더링
+```js
+// routes/index.js
+router.get('/room/:id', async (req, res, next) => {
+    try {
+        const room = await Room.findOne({ _id: req.params.id });
+        const io = req.app.get('io');
+        if (!room) {
+            return res.redirect('/?error=존재하지 않는 방입니다.');
+        }
+        if (room.password && room.password !== req.query.password) {
+            return res.redirect('/?error=비밀번호가 틀렸습니다.');
+        }
+        // io.of('/chat').adapter.rooms 안에 방 목록들이 들어있다.
+        const { rooms } = io.of('/chat').adapter;
+        // 인원제한
+        // rooms[req.params.id]는 방 안의 사용자들
+        // rooms[req.params.id].length 방 안의 사용자가 몇 명인지 확인
+        if (rooms && rooms[req.params.id] && room.max <= rooms[req.params.id].length) {
+            return res.redirect('/?error=허용 인원이 초과하였습니다.');
+        }
+        const chats = await Chat.find({ room: room._id }).sort('createdAt');
+        return res.render('chat', {
+            room,
+            title: room.title,
+            chats,
+            user: req.session.color,
+        });
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+```
+## 6-3. 채팅 라우터 만들기
+* 채팅을 DB에 저장 후 방에 뿌려줌
+```js
+router.post('/room/:id/chat', async (req, res, next) => {
+    try {
+        const chat = await Chat.create({
+            room: req.params.id,
+            user: req.session.color,
+            chat: req.body.chat,
+        });
+        req.app.get('io').of('/chat').to(req.params.id).emit('chat', chat);
+        res.send('ok');
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+```
