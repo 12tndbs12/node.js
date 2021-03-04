@@ -219,6 +219,9 @@ Node.js
 * AWS 람다 사용하기
 * 구글 클라우드 스토리지 사용하기
 * 구글 클라우드 펑션스 사용하기
+
+# 자바스크립트 공부
+* <https://ko.javascript.info/>
 # 출처 Node.js 교과서
 # Node.js 교과서 참조
 
