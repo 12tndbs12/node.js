@@ -19,21 +19,61 @@ first();
 * 세 번째 -> 두 번째-> 첫 번째
     * 파일이 실행될때 기본적으로 anoymous가 쌓이고 이후 first, second, third순으로 쌓인다.
     * 실행은 역순으로 한다. (third, second, first)
-* Anonymous는 가상의 전역 컨텍스트이다.
-* 함수 호출 순서대로 쌓이고, 역순으로 실행된다.
-* 함수 실행이 완료되면 스택에서 빠진다.
-* LIFO 구조라서 스택이라고 불린다.
-    * LIFO : Last In First out (나중에 들어간게 먼저 나오는것을 의미한다.)
+* 호출 스택(함수의 호출, 자료구조의 스택)
+    * Anonymous는 가상의 전역 컨텍스트이다.(항상 있다고 생각하는게 좋다.)
+    * 함수 호출 순서대로 쌓이고, 역순으로 실행된다.
+    * 함수 실행이 완료되면 스택에서 빠진다.
+    * LIFO 구조라서 스택이라고 불린다.
+        * LIFO : Last In First out (나중에 들어간게 먼저 나오는것을 의미한다.)
+
+* 아래 코드의 순서 예측해보기
+    * 시작 -> 끝 -> 3초 후 실행
+    * 호출 스택만으로는 설명이 안 됨(run은 호출 안 했는데?)
+    * 호출 스택 + 이벤트 루프로 설명할 수 있음
+```js
+function run() {
+    console.log('3초 후 실행');
+}
+console.log('시작');
+setTimeout(run, 3000);
+console.log('끝');
+```
 
 ## 1.2 이벤트 루프
-* ch01 참고
 * 강의 참고 (노드교과서 2-2. 이벤트 루프 알아보기)
+* 이벤트루프 구조
+    * **이벤트 루프** : 이벤트 발생 시 호출할 콜백 함수들을 관리하고, 호출된 콜백 함수의 실행 순서를 결정하는 역할을 담당한다. 노드가 종료될 때까지 이벤트 처리를 위한 작업을 반복하므로 루프(loop)라고 부른다.
+    * **태스크 큐** : 이벤트 발생 후, 백그라운드에서는 태스크 큐로 타이머나 이벤트 리스너의 콜백 함수를 보낸다. 콜백 큐라고도 불린다. 콜백들은 보통 완료된 순서대로 줄을 서 있지만 특정한 경우에는 순사가 바뀌기도 한다.
+        * 이벤트 발생 후 호출되어야할 콜백 ㅎ하마수들이 순서대로 기다리는 공간
+    * **백그라운드** : setTimeout 같은 타이머나 I/O 작업 콜백, 이벤트 리스너들이 대기하는 곳이다. 여러 작업이 동시에 실행될 수 있다.
+* 예제 코드에서 setTimeout이 호출될 때 콜백 함수 run은 백그라운드로
+    * 백그라운드에서 3초를 보냄
+    * 3초가 다 지난 후 백그라운드에서 태스크 큐로 보내짐
+* setTimeout과 anonymous가 실행 완료된 후 호출 스택이 완전히 비워지면, 이벤트 루프가 태스크 큐의 콜백을 호출 스택으로 올림
+    * 호출 스택이 비워져야만 올림
+    * 호출 스택에 함수가 많이 차 있으면 그것들을 처리하느라 3초가 지난 후에도 run 함수가 태스크 큐에서 대기하게 됨 -> 타이머가 정확하지 않을 수 있는 이유
+* run이 호출 스택에서 실행되고, 완료 후 호출 스택에서 나감
+    * 이벤트 루프는 태스크 큐에 다음 함수가 들어올 때까지 계속 대기
+    * 태스크 큐는 실제로 여러 개고, 태스크 큐들과 함수들 간의 순서를 이벤트 루프가 결정함
+```js
+function run() {
+    console.log('3초 후 실행');
+}
+console.log('시작');
+setTimeout(run, 3000);
+console.log('끝');
+```
 
-# 2. const, let
+
+# 2. ES2015+
+## 2-1. const, let
 * ES2015 이전에는 var로 변수를 선언했다.
-* ES2015 부터는 const와 let이 대체했다.
-* 가장 큰 차이점 : 블록 스코프(var는 함수 스코프이다.)
-* var는 쓸 일이 없고, 알기만 하면된다.
+    * ES2015 부터는 const와 let이 대체했다.
+    * 가장 큰 차이점 : 블록 스코프(var는 함수 스코프이다.)
+    * var는 쓸 일이 없고, 알기만 하면된다.
+* 기존: 함수 스코프(function() {}이 스코프의 기준점)
+    * 다른 언어와는 달리 if나 for, while은 영향을 미치지 못함
+    * const와 let은 함수 및 블록({})에도 별도의 스코프를 가짐
 ```js
 if(true){
     var x = 3;
@@ -45,14 +85,27 @@ if(true){
 }
 console.log(y);     // Uncaught ReferenceError ~~~
 ```
-## 2.1 const
-* const는 한 번 값을 할당하면 다른 값을 할당할 수 없다.
-* 먼저 const로 선언 후 나중에 필요하면 let으로 바꾸면 된다.
-## 2.2 let
-* let은 한 번 선언된 이후에도 다시 값을 할당할 수 있다.
+* const는 상수
+    * 상수에 할당한 값은 다른 값으로 변경이 불가능
+    * 변경하고자 할 때는 let으로 변수를 선언해야한다.
+    * 상수 선언 시부터 초기화가 필요하다
+    * 초기화를 하지 않고 선언하면 에러
+    * 먼저 const로 선언 후 나중에 필요하면 let으로 바꾸면 된다.
+    * let은 한 번 선언된 이후에도 다시 값을 할당할 수 있다.
+```js
+const a = 0;
+a = 1; // Uncaught TypeError: ~~~
 
-# 3. 템플릿 문자열
+let b = 0;
+b = 1; // 1
+
+const c; //Uncaught SyntaxError: ~~~
+```
+## 2-2. 템플릿 문자열
 * 기존 문자열은 큰따옴표 또는 작은따옴표로 감쌋지만 템플릿 문자열을 ` (백틱)을 사용해서 감싼다.
+    * ES2015부터는 ` (백틱) 사용 가능
+    * 백틱 문자열 안에 ${변수} 처럼 사용
+
 ```js
 const num1 = 1;
 const num2 = 2;
@@ -66,7 +119,7 @@ a();
 a``; //얘도 가능
 ```
 
-# 4. 객체 리터럴
+## 2-3. 객체 리터럴
 * 훨씬 간결한 문법으로 객체 리터럴이 표현 가능하다
     * 객체의 메서드에 :function을 붙이지 않아도 된다.
     * { sayNode: sayNode}와 같은 것을 { sayNode }로 축약이 가능하다.
@@ -88,7 +141,6 @@ oldObject.sayNode();    // Node
 oldObject.sayJS();      // JS
 console.log(oldObject.ES6); //Fantastic
 
-// ---------------------------------------------
 // 추가된 문법
 const newObject = {
     sayJS() {
@@ -102,7 +154,8 @@ newObject.sayJS();      // JS
 console.log(newObject.ES6);     // Fantastic
 ```
 
-# 5. 화살표 함수
+## 2-4. 화살표 함수
+* this를 쓸일이 있다면 function 없다면 화살표 함수를 추천
 * add1, add2, add3, add4는 같은 기능을 하는 함수이다.
     * add2 : add1을 화살표 함수로 나타낼 수 있다.
     * add3 : 함수의 본문이 return만 있는 경우 return 생략
@@ -124,9 +177,38 @@ function not1(x) {
 const not2 = x => !x;
 ```
 * 화살표 함수가 기존 function() {}을 대체하는 건 아니다. (this가 다르기 때문)
-* this를 쓸거면 function, this를 쓰지 않는다면 화살표함수를 권장한다.
-
-# 6. 구조분해 할당
+    * this를 쓸거면 function, this를 쓰지 않는다면 화살표함수를 권장한다.
+    * logFriends 메서드의 this 값에 주목
+    * forEach의 function의 this와 logFriends의 this는 다름
+    * that이라는 중간 변수를 이용해서 logFriends의 this를 전달
+```js
+var relationship1 = {
+    name: 'zero',
+    friends: ['nero', 'hero', 'xero'],
+    logFriends: function () {
+        var that = this;
+        this.friends.forEach(function (friend) {
+            console.log(that.name, friend);
+        });
+    },
+};
+```
+* forEach의 인자로 화살표 함수가 들어간 것에 주목
+    * forEach의 화살표함수의 this와 logFriends의 this가 같아짐
+    * 화살표 함수는 자신을 포함하는 함수의 this를 물려받음
+    * 물려받고 싶지 않을 때: function() {}을 사용
+```js
+const relationship2 = {
+    name: 'zero',
+    friends: ['nero', 'hero', 'xero'],
+    logFriends() {
+        this.friends.forEach(friend => {
+            console.log(that.name, friend);
+        });
+    },
+};
+```
+## 2-5. 구조분해 할당
 * this가 있을경우는 구조분해 할당을 사용안하는걸 권장한다.
 ```js
 const example = {a: 123, b: {c: 135, d: 146}};
@@ -138,6 +220,9 @@ const {a, b:{d}} = example;
 console.log(a);     // 123
 console.log(d);     // 146
 ```
+* const [변수] = 배열; 형식
+    *  각 배열 인덱스와 변수가 대응됨
+    * x는 arr[0], y = arr[1], ... 
 
 ```js
 arr = [1,2,3,4,5]
@@ -149,11 +234,63 @@ const z = arr[4];
 const [x,y, , ,z] = arr;
 ```
 
-# 7. 클래스
-* 프로토타입 분법을 깔끔하게 작성할 수 있는 Class 문법 도입
+## 2-6. 클래스
+* 프로토타입 문법을 깔끔하게 작성할 수 있는 Class 문법 도입
     * Constructor(생성자), Extends(상속) 등을 깔끔하게 처리할 수 있다.
     * 코드가 그룹화되어 가독성이 향상된다.
-* p.73
+```js
+var Human = function (type) {
+    this.type = type || 'human';
+};
+Human.isHuman = function (human) {
+    return human instanceof Human;
+}
+Human.prototype.breathe = function () {
+    alert('h-a-a-a-m');
+};
+var Zero = function (type, fristName, lastName) {
+    Human.apply(this, arguments);
+    this.fristName = fristName;
+    this.lastName = lastName;
+}
+Zero.prototype = Object.create(Human.prototype);
+Zero.prototype.constructer = Zero;  // 상속하는 부분
+Zero.prototype.sayName = function () {
+    alert(this.fristName + ' ' + this.lastName);
+};
+var oldZero = new Zero('human', 'Zero', 'Cho');
+Human.isHuman(oldZero); // true
+```
+* 전반적으로 코드 구성이 깔끔해짐
+    * Class 내부에 관련된 코드들이 묶임
+    * Super로 부모 Class 호출
+    * Static 키워드로 클래스 메서드 생성
+```js
+class Human {
+    constructor(type = 'human'){
+        this.type = type;
+    }
+    static isHuman(human){
+        return human instanceof Human;
+    }
+    breathe() {
+        alert('h-a-a-a-m');
+    }
+}
+class Zero extends Human {
+    constructor(type, firstName, lastName){
+        super(type);
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+    sayName() {
+        super.breathe();
+        alert(`${this.firstName} ${this.lastName}`);
+    }
+}
+const newZero = new Zero('human', 'Zero', 'Cho');
+Human.isHuman(newZero); //true
+```
 
 # 8. 프로미스
 * 프로미스란 내용이 실행은 되었지만 결과를 아직 반환하지 않은 객체를 말한다.
