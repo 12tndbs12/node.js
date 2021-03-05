@@ -31,3 +31,8 @@ ch11/nodebird/uploads
 ch12/gif-chat/node_modules
 ch12/gif-chat/.env
 ch12/gif-chat/uploads
+
+ch13/node-auction/config
+ch13/node-auction/node_modules
+ch13/node-auction/.env
+ch13/node-auction/uploads

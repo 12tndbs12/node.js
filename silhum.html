@@ -7,9 +7,10 @@
 </head>
 <body>
     <script>
-        const db = {};
-        db.silhum = "silhum";
-        console.log(db.silhum);
+        let promise = new Promise((resolve, reject) => {
+            resolve(console.log("hi"));
+            reject(console.error(new Error("에러")));
+        });
     </script>
 </body>
 </html>
