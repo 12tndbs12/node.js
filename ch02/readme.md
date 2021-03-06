@@ -292,12 +292,16 @@ const newZero = new Zero('human', 'Zero', 'Cho');
 Human.isHuman(newZero); //true
 ```
 
-# 8. 프로미스
-* 프로미스란 내용이 실행은 되었지만 결과를 아직 반환하지 않은 객체를 말한다.
-* Then을 붙이면 결과를 반환한다.
-* 실행이 완료되지 않았으면 완료된 후에 Then 내부 함수가 실행된다.
-* 코드를 분리할 수 있다.
-* 쉽게 설명하자면 실행은 바로 하고, 결괏값은 나중에 받는 객체이다.
+## 2-7. 프로미스
+*  콜백 헬이라고 불리는 지저분한 자바스크립트 코드의 해결책
+    * 프로미스란 내용이 실행은 되었지만 결과를 아직 반환하지 않은 객체를 말한다.
+    * Then을 붙이면 결과를 반환한다.
+    * 실행이 완료되지 않았으면 완료된 후에 Then 내부 함수가 실행된다.
+    * 코드를 분리할 수 있다.
+    * 쉽게 설명하자면 실행은 바로 하고, 결괏값은 나중에 받는 객체이다.
+    * Resolve(성공리턴값) -> then으로 연결
+    * Reject(실패리턴값) -> catch로 연결
+    * Finally 부분은 무조건 실행됨
 ```js
 const condition = true; // true면 resolve, false면 reject
 const promise = new Promise((resolve, reject) => {
@@ -319,9 +323,72 @@ const promise = new Promise((resolve, reject) => {
         console.log("무조건");  //  끝나고 무조건 실행
     });
 ```
-* **Promise.resolve(성공리턴값)** : 바로 resolve하는 프로미스
-* **Promise.reject(실패리턴값)** : 바로 reject하는 프로미스
-* **Promise.all(배열)** : 여러 개의 프로미스를 동시에 실행한다.
+* 프로미스의 then 연달아 사용 가능(프로미스 체이닝)
+    * then 안에서 return한 값이 다음 then으로 넘어감
+    * return 값이 프로미스면 resolve 후 넘어감
+    * 에러가 난 경우 바로 catch로 이동
+    * 에러는 catch에서 한 번에 처리
+```js
+promise
+    .then((message) => {
+        return new Promise((resolve, reject) => {
+            resolve(message);
+        });
+    })
+    .then((message2) => {
+        console.log(message2);
+        return new Promise((resolve, reject) => {
+            resolve(message2);
+        });
+    })
+    .then((message3) => {
+        console.log(message3);
+    })
+    .catch((error) => {
+        console.error(error);
+    });
+```
+* 콜백 패턴(3중첩)을 프로미스로 바꾸는 예제
+```js
+function findAndSaveUser(Users) {
+    User.findOne({}, (err, user) => { // 첫 번째 콜백
+        if (err) {
+            return console.error(err);
+        }
+        user.name = 'zero';
+        user.save((err) => {    // 두 번째 콜백
+            if (err) {
+            return console.error(err);
+            }
+            User.findOne({ gender: 'm' }, (err, user) => {// 세 번째 콜백
+                // 생략
+            });
+        });
+    });
+}
+```
+* findOne, save 메서드가 프로미스를 지원한다고 가정
+    * 지원하지 않는 경우 프로미스 사용법은 3장에 나옴
+```js
+function findAndSaveUser(Users) {
+    User.findOne({})
+            .then((user) => {
+                user.name = 'zero';
+                return user.save();
+            })
+            .then((user) => {
+                return User.findOne({ gender: 'm' });
+            })
+            .then((user) => {
+                // 생략
+            })
+            .catch(err => {
+                console.error(err);
+            })
+```
+* Promise.resolve(성공리턴값) : 바로 resolve하는 프로미스
+* Promise.reject(실패리턴값) : 바로 reject하는 프로미스
+* Promise.all(배열) : 여러 개의 프로미스를 동시에 실행한다.
     * 하나라도 실패하면 catch로 간다.
     * 최신으로는 allSettled로 실패한 것만 추려낼 수 있다.
 ```js
@@ -335,22 +402,49 @@ Promise.all([promise1, promise2])
         console.error(error);
     });
 ```
-
-# 9. async / await
+## 2-8. async / await
 * 노드 7.6 버전부터 지원되며, ES2017에서 추가되었다.
 * async / await은 프로미스를 사용한 코드를 한 번 더 꺌끔하게 줄인다.
-* 변수 = await 프로미스; 인 경우 프로미스가 resolve된 값이 변수에 저장된다.
-* 변수 await 값;인 경우 그 값이 변수에 저장된다.
+    * 이전챕터의 findAndSaveUser 함수
+* async function의 도입
+    * 변수 = await 프로미스; 인 경우 프로미스가 resolve된 값이 변수에 저장된다.
+    * 변수 await 값;인 경우 그 값이 변수에 저장된다.
+```js
+async function findAndSaveUser(Users) {
+    let user = await Users.findOne({});
+    user.name = 'zero';
+    user = await user.save();
+    user = await Users.findOne({ gender: 'm' });
+    // 생략
+}
+```
+* 에러 처리를 위해 try catch로 감싸주어야 함
+    * 각각의 프로미스 에러 처리를 위해서는 각각을 try catch로 감싸주어야 함
+```js
+async function findAndSaveUser(Users) {
+    try{
+        let user = await Users.findOne({});
+        user.name = 'zero';
+        user = await user.save();
+        user = await Users.findOne({ gender: 'm' });
+        // 생략
+    } catch (error) {
+        console.error(error);
+    }
+}
+```
+* 화살표 함수도 async/await 가능
+* Async 함수는 항상 promise를 반환(return)
+    * Then이나 await을 붙일 수 있음.
 * 예전에는 async 함수 안에만 await을 쓸 수 있었으나 지금은 아래 예제처럼 가능
-* p.78
 ```js
 const promise = new Promise(...)
 promise.then((result) => ...)
 
 const result = await promise;
-
 ```
-## 9-1 for await of
+
+## 2-9. for await of
 * 노드 10부터 지원한다.
 * for await (변수 of 프로미스배열)
     * resolve된 프로미스가 변수에 담겨서 나온다.
@@ -364,8 +458,8 @@ const promise2 = Promise.resolve("성공2");
     }
 })();
 ```
-# 10. 프런트엔드 자바스크립트
-## 10-1. AJAX
+# 3. 프런트엔드 자바스크립트
+## 3-1. AJAX
 * AJAX는 비동기적 웹 서비스를 개발할 때 사용하는 기법이다.
 * 서버로 요청을 보내는 코드
     * 라이브러리 없이는 브라우저가 지원하는 XMLHttpRequest 객체를 이용한다.(복잡하고, 잘 안쓰인다.)
@@ -412,7 +506,7 @@ axios.get("https://www.zerocho.com/api/get").then((result) => {
     }
 })();
 ```
-## 10-2. FormData
+## 3-2. FormData
 * HTML form 태그의 데이터를 동적으로 제어할 수 있는 기능이다. 주로 AJAX와 함께 사용된다.
 * 보통 이미지 업로드나 파일 업로드, 동영상 업로드에 자주 쓰인다.
 * HTML form 태그에 담긴 데이터를 AJAX 요청으로 보내고 싶은 경우
@@ -460,8 +554,10 @@ formData.getAll("item");    //  ["apple"];
 * 가끔 주소창에 한글을 입력하면 서버가 처리하지 못하는 경우가 있다.
     * 이 경우 encodeURIComponent로 한글을 감싸줘서 처리한다.
     * 받는 쪽에서는 decodeURIComponent를 사용하면 된다.
-* p.85
+* 노드를 encodeURIComponent하면 %EB%85%B8%EB%93%9C가 됨
+    * decodeURIComponent로 서버에서 한글 해석
 ```js
+// encode
 (async () => {
     try{
         const result = await axios.get(`https://www.zerocho.com/api/search/${encodeURIComponent('노드')}`);
@@ -471,9 +567,11 @@ formData.getAll("item");    //  ["apple"];
         console.error(error);
     }
 })();
+// decode
+decodeURIComponent('%EB%85%B8%EB%93%9C')
 ```
 
-## 10-4. 데이터 속성과 dataset
+## 3-4. data attribute와 dataset
 * HTML 태그에 데이터를 저장하는 방법
     * 서버의 데이터를 프런트엔드로 내려줄 때 사용한다.
     * 태그 속성으로 data-속성명
@@ -482,7 +580,7 @@ formData.getAll("item");    //  ["apple"];
         * data-user-job -> dataset.usetJob
         * data-id -> dataset.id
     * 반대로 자바스크립트 dataset에 값을 넣으면 data-속성이 생긴다.
-        *dataset.monthSalary = 10000 -> data-month-salary="10000"
+        * dataset.monthSalary = 10000 -> data-month-salary="10000"
     * 단점 : 누구나 이 데이터를 볼 수 있다.
 ```html
 <ul>
