@@ -1,41 +1,60 @@
 노드 기능 알아보기
 ==================
 # 1.REPL 사용하기
+## 1-1 REPL 사용하기
 * 노드는 REPL이라는 콘솔을 제공한다
 * R(Read), E(Evaluate), P(Print), L(Loop)
 * 코드를 읽고, 해석하고, 결과물을 반환하고, 종료할 때까지 반복한다.
 * 윈도우는 cmd, 맥이나 리눅스는 터미널에 node를 입력한다.
     * VS Code는 ctrl + ` 을 누르면 터미널을 연다.
     * VS Code에서 터미널 기본을 cmd로 바꾼다.
-* 그 이후 자바스크립트 문법을 사용가능
+* 프롬프트가 > 모양으로 바뀌면, 자바스크립트 코드 입력
+* 입력한 값의 결괏값이 바로 출력됨.
+    * 간단한 코드를 테스트하는 용도로 적합
+    * 긴 코드를 입력하기에는 부적합
 * 나갈때는 ctrl + c, ctrl + c를 누르면 나간다.
 
 # 2. JS 파일 실행하기
+## 2-1. JS 파일을 만들어 실행하기
 * 자바스크립트 파일을 만들어서 코드를 실행하는 방법
     * 아무디렉터리에 ex01_1.js를 만든후
     * node [자바스크립트 파일 경로]로 실행한다.
+    *  실행 결괏값이 출력됨
 
 # 3. 모듈로 만들기
+## 3-1. 모듈
 * 노드는 자바스크립트 코드를 모듈로 만들 수 있다.
     * **모듈**이란? 특정한 기능을 하는 함수나 변수들의 집합이다.
     * 모듈로 만들면 여러 프로그램에서 재사용이 가능하다.
+## 3-2. 모듈 만들어보기
 * 같은 폴더 내에 var.js func.js index.js 를 만든다.
     * 파일 끝에 module.exports로 모듈로 만들 값을 지정한다.
         * module.exports는 파일에서 **단 한번**만 써야한다.
     * 다른 파일에서 require(파일 경로)로 그 모듈의 내용을 가져올 수 있다.
-
-## 3-1. ES2015 모듈
+## 3-3. 파일 간의 모듈 관계
+* node index로 실행
+    * const { odd, even } 부분은 module.exports를 구조분해 할당한 것임(2장 참고)
+## 3-4. ES2015 모듈
 * 자바스크립트 자체 모듈 시스템 문법이 생겼다
+    * 아직 노드에서의 지원은 완벽하지 않음. mjs 확장자를 사용해야 함.
     * 크게는 require 대신 import, module.exports 대신 export default를 쓰는것으로 바뀌었다.
-# 4. 노드 내장 객체
+```js
+    import { odd, even } from './var';
+    function checkOddOrEven(num) {
+        if (num % 2) {
+            retrun odd;
+        }
+        return even;
+    }
+    export default checkOddOrEven;
+```
+# 4. 노드 내장 객체 알아보기
 * 선언하지 않아도 기본적으로 node 안에 내장되어있다.
 ## 4-1. global
 * 노드의 전역 객체
     * 브라우저의 window 같은 역할이다.
     *  모든 파일에서 접근이 가능하다.
     * window처럼 생략도 가능하다. (console, require도 global의 속성이다.)
-* global 속성에 값을 대입하면 다른 파일에서도 사용이 가능하다.
-    * 하지만 헷갈릴수 있기 때문에 모듈을 사용하는 것을 권장한다.
 ```js
 // globalA.js
 module.exports = () => global.message;
@@ -46,7 +65,10 @@ console.log(A());
 // 결과
 // 안녕하세요.
 ```
-## 4-2. console
+## 4-2. global 속성 공유
+* global 속성에 값을 대입하면 다른 파일에서도 사용이 가능하다.
+    * 하지만 헷갈릴수 있기 때문에 모듈을 사용하는 것을 권장한다.
+## 4-3. console 객체
 * 브라우저의 console 객체와 매우 유사하다.
     * console.time, console.timeEnd : 시간 로깅
         * 둘 사이의 시간을 잴수 있다. 효율성을 따질 때 사용
@@ -55,8 +77,11 @@ console.log(A());
     * console.dir : 객체 로깅
         * ex) console.dir({hello : 'hello'});
     * console.trace : 호출스택 로깅
-
-## 4-3. 타이머 메서드
+## 4-4. console 예제 실행
+* node console.js
+## 4-5. 타이머 메서드
+* set 메서드에 clear 메서드가 대응됨
+    * set 메서드의 리턴 값(아이디)을 clear 메서드에 넣어 취소
 * 이 세개의 메서드는 백그라운드로 보내주는 대표적인 비동기 메서드이다.
     * setTimeout(콜백 함수, 밀리초) : 주어진 밀리초(1000분의 1초) 이후에 콜백 함수를 실행한다.
     * setInteral(콜백 함수, 밀리초) : 주어진 밀리초마다 콜백 함수를 반복 실행한다.
@@ -65,17 +90,25 @@ console.log(A());
     * clearTimeout(아이디) : setTimeout을 취소한다.
     * clearInterval(아이디) : setInterval을 취소한다.
     * clearImmediate(아이디) : setImmediate를 취소한다.
-
-## 4-4. __filename, __dirname
+## 4-6. 타이머 예제
+* ex04/timer.js 참조
+    * setTimeout(콜백, 0)보다 setImmediate 권장
+## 4-7. __filename, __dirname
 * 노드는 브라우저와 다르게 컴퓨터에 접근이 가능하다.
-* **__filename** : 현재 파일 경로
-* **__dirname** : 현재 폴더(디렉터리) 경로
+* __filename : 현재 파일 경로
+* __dirname : 현재 폴더(디렉터리) 경로
 ```js
 console.log(__filename);
 console.log(__dirname);
 ```
-## 4-5. module, exports
+## 4-8. module, exports
 * module.exports 외에도 exports로 모듈을 만들 수 있다.
+    * 모듈 예제의 var.js를 다음과 같이 바꾼 후 실행
+    * 동일하게 동작함
+    * 동일한 이유는 module.exports와 exports가 참조 관계이기 때문
+    * 동일한 이유는 module.exports와 exports가 참조 관계이기 때문
+    * 참조관계가 깨지는 걸 주의 해야 한다.
+    * module.exports에 함수를 대입한 경우는 exports로 바꿀 수 없다.
 ```js
 // ex03의 var.js
 // module을 생략 가능하다.
@@ -83,18 +116,22 @@ exports.odd = '홀수입니다.';
 exports.even = '짝수입니다.';
 // module.exports = { odd, even }; 과 같다
 ```
-* 참조관계가 깨지는 걸 주의 해야 한다.
-* module.exports에 함수를 대입한 경우는 exports로 바꿀 수 없다.
 
-## 4-6. this
+## 4-9. this
 * 노드에서 this를 사용할 때에는 주의점이 있다.
     * 최상위 스코프의 this는 module.exports를 가리킨다.
     * 그 외에는 브라우저의 자바스크립트와 동일하다
     * 함수 선언문 내부의 this는 global(전역) 객체를 가리킨다.
-
-## 4-7. require의 특성
-* ~~꼭 지금 알 필요는 없고, 나중에 하다가 모르겠으면 와도 충분하다.~~
-* require가 제일 위에 올 필요는 없다.
+```js
+console.log(this);  // {}
+console.log(this === module.exports); // true
+function a() {
+    console.log(this === global);   // true
+}
+a();
+```
+## 4-10. require의 특성
+* require가 제일 위에 올 필요는 없다.   
 * require.cache에 한 번 require한 모듈에 대한 캐슁 정보가 들어있다.
 * require.main은 노드 실행 시 첫 모듈을 가리킨다.
     * require.main으로 어떤 파일을 실행한건지 알아낼 수 있다.
@@ -109,10 +146,32 @@ console.log('require.main입니다.');
 console.log(require.main === module);
 console.log(require.main.filename);
 ```
-* 순환 참조(무한)일 경우 순환 참조되는 대상을 빈 객체로 만든다.
+## 4-11. 순환참조
+* 두 개의 모듈이 서로를 require하는 상황을 조심해야 함
+    * Dep1이 dep2를 require하고, dep2가 dep1을 require 함.
+    * Dep1의 module.exports가 함수가 아니라 빈 객체가 됨(무한 반복을 막기 위해 의도됨)
+    * 순환참조하는 상황이 나오지 않도록 하는 게 좋음
     * 따라서 구조를 잘 짜야한다.
-
-##  4-8. process
+```js
+// dep1.js
+const dep2 = require('./dep2');
+console.log('require dep2', dep2);
+module.exports = () => {
+    console.log('dep2', dep2);
+};
+// dep2.js
+const dep1 = require('./dep1');
+console.log('require dep1', dep1);
+module.exports = () => {
+    console.log('dep1', dep1);
+};
+// dep-run.js
+const dep1 = require('./dep1');
+const dep2 = require('./dep2')
+dep1();
+dep2();
+```
+##  4-12. process
 * 현재 실행중인 노드 프로세스에 대한 정보를 담고 있다.
     * 컴퓨터마다 출력값이 다를 수 있다.
 ```js
@@ -134,7 +193,7 @@ win32   // 운영체제 플랫폼 정보이다.
 > process.cpuUsage()
 { user: 359000, system: 109000 }    // 현재 cpu 사용량이다.
 ```
-### 4-8-1. process.env
+### 4-13. process.env
 * 시스템 환경 변수들이 들어있는 객체이다
     * 비밀키(데이터베이스 비밀번호, 서드파티 앱 키등)를 보관하는 용도로도 쓰인다.
     * 환경 변수는 process.env로 접근이 가능하다.
@@ -146,11 +205,11 @@ win32   // 운영체제 플랫폼 정보이다.
     * ex) NODE_OPTIONS(노드 실행 옵션), UV_THREADPOOL_SIZE(스레드풀 개수)
         * max-old-space-size는 노드가 사용할 수 있는 메모리를 지정하는 옵션
 
-### 4-8-2. process.nextTick(콜백)
+### 4-14. process.nextTick(콜백)
 * 이벤트 루프가 다른 콜백 함수들보다 nextTick의 콜백 함수를 우선적으로 처리한다.
-* 너무 남용하면 다른 콜백 함수들 실행이 늦어진다.
-* 비슷한 경우로 promise가 있다. (nextTick처럼 우선순위가 높다.)
-* 아래 예제에서 setImmediate, setTimeout보다 promise와 nextTick이 먼저 실행된다.
+    * 너무 남용하면 다른 콜백 함수들 실행이 늦어진다.
+    * 비슷한 경우로 promise가 있다. (nextTick처럼 우선순위가 높다.)
+    * 아래 예제에서 setImmediate, setTimeout보다 promise와 nextTick이 먼저 실행된다.
 ```js
 setImmediate(() => {
     console.log('immediate');
@@ -169,10 +228,10 @@ Promise.resolve().then(() => console.log('promise');)
 // timeout
 // immediate
 ```
-### 4-8-3. process.exit(코드)
+### 4-15. process.exit(코드)
 * 현재의 프로세스를 멈춘다.
-* 코드가 없거나 0이면 정상 종료
-* 이외의 코드는 비정상 종료를 의미한다.
+    * 코드가 없거나 0이면 정상 종료
+    * 이외의 코드는 비정상 종료를 의미한다.
 ```js
 //exit.js
     let i = 1;
@@ -196,7 +255,7 @@ Promise.resolve().then(() => console.log('promise');)
 
 ## 5-1. os
 * os는 운영체제의 정보를 담고 있다.
-* 모듈은 require로 가져온다. (내장 모듈이기 때문에 경로 대신 이름만 적어줘도 된다.)
+    * 모듈은 require로 가져온다. (내장 모듈이기 때문에 경로 대신 이름만 적어줘도 된다.)
 ```js
 const os = require('os');
 console.log('운영체제 정보 -----------------------------------');
@@ -223,7 +282,7 @@ console.log(os.totalmem());     //  전체 메모리 용량을 보여준다.
 
 ## 5-2. path
 * 폴더와 파일의 경로를 쉽게 조작하도록 도와주는 모듈이다.
-* 윈도우와 POSIX 운영체제들은 경로 구분자가 다르다.
+    * 윈도우와 POSIX 운영체제들은 경로 구분자가 다르다.
 * path 모듈은 그 경로 구분자를 자동으로 바꾸어준다.
 * p.117확인
 ```js
@@ -256,12 +315,24 @@ console.log(path.relative('C:\\Users\\ksy\\Desktop\\Node.js\\ch03\\ex05', 'C:\\'
 console.log(path.join(__dirname,'..','ex03','var.js')); // 여러 인수를 넣으면 하나의 경로로 합친다.
 console.log(path.resolve(__dirname, '..', '/var.js'));  // join과 비슷하지만 /를 만나면 절대경로로 인식한다.
 ```
+## 5-4. 알아둬야할 path 관련 정보
+*  join과 resolve의 차이: resolve는 /를 절대경로로 처리, join은 상대경로로 처리
+    * 상대 경로: 현재 파일 기준. 같은 경로면 점 하나(.), 한 단계 상위 경로면 점 두 개(..)
+    * 절대 경로는 루트 폴더나 노드 프로세스가 실행되는 위치가 기준
+```js
+path.join('/a', '/b', 'c');     // 결과: /a/b/c 
+path.resolve('/a', '/b', 'c');  // 결과: /b/c
+```
+* \\와 \ 차이: \는 윈도 경로 구분자, \\는 자바스크립트 문자열 안에서 사용(\가 특수문    자라 \\로 이스케이프 해준 것)
 
-## 5-3 url
+* 윈도에서 POSIX path를 쓰고 싶다면: path.posix 객체 사용
+    * POSIX에서 윈도 path를 쓰고 싶다면: path.win32 객체 사용
+
+## 5-5. url
 * 인터넷 주소를 쉽게 조작하도록 도와주는 모듈이다.
     * url 처리에는 크게 2가지 방식이 있다. (기존 노드 방식, WHATWG 방식)
     * 아래 그림에서 가운데 주소를 기준으로 위쪽은 기존 노드 바아식, 아래쪽은 WHATWG 방식이다.
-* p.119
+* url.js
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                              href                                              │
@@ -281,11 +352,17 @@ console.log(path.resolve(__dirname, '..', '/var.js'));  // join과 비슷하지�
 │                                              href                                              │
 └────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+## 5-6. url 모듈 메서드
+* 기존 노드 방식 메서드
+    * url.parse(주소): 주소를 분해합니다. WHATWG 방식과 비교하면 username과 password대신 auth 속성이 있고, searchParams 대신 query가 있습니다.
+    * url.format(객체): WHATWG 방식의 url과 기존 노드의 url 모두 사용할 수 있습니다. 분해되었던 url 객체를 다시 원래 상태로 조립합니다.
 
-## 5-4 searchParams
+## 5-7. searchParams
 * WHATWG 방식에서 쿼리스트링(search) 부분 처리를 도와주는 객체이다.
+    * ?page=3&limit=10&category=nodejs&category=javascript 부분
+* searchParam.js 참조
 * 메서드
-    *  getAll(키) : 키에 해당하는 모든 값들을 가져온다.
+    * getAll(키) : 키에 해당하는 모든 값들을 가져온다.
     * get(키) : 키에 해당하는 첫 번째 값만 가져온다.
     * has(키) : 해당 키가 있는지 없는지를 검사한다.
     * keys() : searchParams의 모든 키를 반복기 객체로 가져온다.
@@ -295,43 +372,70 @@ console.log(path.resolve(__dirname, '..', '/var.js'));  // join과 비슷하지�
     * delete(키) : 해당 키를 제거한다.
     * toString() : 조작한 searchParams 객체를 다시 문자열로 만든다. 이 문자열을 search에 대입하면 주소 객체에 반영된다.
 
-## 5-5 querystring
+## 5-8. querystring
 * 기존 노드의 url을 사용할 때 search 부분을 사용하기 쉽게 객체로 만드는 모듈이다.
     * querystring.parse(쿼리) : url의 query부분을 자바스크립트 객체로 분해해준다.
     * querystring.stringify(객체) : 분해된 query 객체를 문자열로 다시 조립해준다.
+```js
+// querystring.js
+const url = require('url');
+const querystring = require('querystring');
 
-## 5-6 crypto
-### 5-6-1 단방향 암호화(crypto)
+const parseUrl = url.parse('http://www.gitbut.co.kr/?page=3&limit=10&category=nodejs&category=javascript');
+const query = querystring.parse(parseUrl.query);
+console.log('querystring.parse():', query);
+console.log('querystring.stringfy():', querystring.stringfy(query));
+```
+## 5-9. crypto
 * 암호화는 가능하지만 복호화는 불가능하다.
     * 암호화 : 평문을 암호로 만드는것.
     * 복호화 : 암호를 평문으로 해독
 
 * 단방향 암호화의 대표 주자는 해시 기법이다.
     * 문자열을 고정된 길이의 다른 문자열로 바꾸는 방식
+    * abcdefgh 문자열 -> qvew
 
-* Hash 사용하기(sha512)
-    * createHash(알고리즘) : 사용할 해시 알고리즘을 넣어준다.
-    * update(문자열) : 변환할 문자열을 넣어준다.
-    * digest(인코딩) : 인코딩할 알고리즘을 넣어준다.
-        * base64, hex, latin1이 주로 사용되는데, 그 중 base64가 결과 문자열이 가장 짧아 애용된다. 결과물로 변환된 문자열을 반환한다.
+## 5-10. Hash 사용하기(sha512)
+* createHash(알고리즘) : 사용할 해시 알고리즘을 넣어준다.
+    * md5, sha1, sha256, sha512 등이 가능하지만, md5와 sha1은 이미 취약점이 발견되었습니다.
+    * 현재는 sha512 정도로 충분하지만, 나중에 sha512마저도 취약해지면 더 강화된 알고리즘으로 바꿔야 합니다.
+* update(문자열) : 변환할 문자열을 넣어준다.
+* digest(인코딩) : 인코딩할 알고리즘을 넣어준다.
+    * base64, hex, latin1이 주로 사용되는데, 그 중 base64가 결과 문자열이 가장 짧아 애용된다. 결과물로 변환된 문자열을 반환한다.
 ```js
 const crypto = require('crypto');
 console.log('base64:', crypto.createHash('sha512').update('비밀번호').digest('base64'));
 console.log('hex:', crypto.createHash('sha512').update('비밀번호').digest('hex'));
 console.log('base64:', crypto.createHash('sha512').update('다른 비밀번호').digest('base64'));
 ```
-### 5-6-2 pbkdf2
+## 5-11.  pbkdf2
 * 컴퓨터의 발달로 기존 암호화 알고리즘이 위협받고 있다.
     * sha512가 취약해지면 sha3로 넘어가야한다.
+    * 현재는 pbkdf2나, bcrypt, scrypt 알고리즘으로 비밀번호를 암호화
     * Node는 pbkdf2와 scrypt를 지원한다.
 
-## 5-7 양방향 암호화
+## 5-12. pbkdf2 예제
+* crypto.randomBytes로 64바이트 문자열 생성 -> salt 역할
+* pbkdf2 인수로 순서대로 비밀번호, salt, 반복 횟수, 출력 바이트, 알고리즘
+* 반복 횟수를 조정해 암호화하는 데 1초 정도 걸리게 맞추는 것이 권장됨
+```js
+const cryto = require('crypto');
+cryto.randomBytes(64, (err, buf) => {
+    const salt = buf.toString('base64');
+    console.log('salt:', salt);
+    cryto.pbkdf2('비밀번호', salt, 100000, 64, 'sha512', (err, key) => {
+        console.log('password:', key.toString('base64'));
+    });
+});
+```
+
+## 5-13. 양방향 암호화
 * 대칭형 암호화(암호문 복호화 가능)
     * Key가 사용된다.
     * 암호화할 때와 복호화 할 때 같은 Key를 사용해야 한다.
 * p.127
 
-## 5-8 util
+## 5-14. util
 * 각종 편의 기능을 모아둔 모듈
     * deprecated와 promisify가 자주 쓰인다.
 * util.deprecated : 함수가 deprecated 처리되었음을 알려준다.
@@ -339,17 +443,61 @@ console.log('base64:', crypto.createHash('sha512').update('다른 비밀번호')
     * 두 번째 인자로 경고 메세지 내용을 넣는다. 함수가 조만간 사라지거나 변경될 때 알려줄 수 있어 유용하다.
 * util.promisify : 콜백 패턴을 프로미스 패턴으로 바꿔준다.
     * 바꿀 함수를 인자로 제공하면 된다. 이렇게 바꾸어두면 async/await 패턴까지 사용할 수 있다. 단 콜백이 (error, data) => {} 형식이어야 한다.
+```js
+const util = require('util');
+const crypto = require('crypto');
 
-## 5-9 worker_threads
+const dontUseMe = util.deprecate((x, y) => {
+    console.log(x + y);
+    }, 'dontUseMe 함수는 deprecated되었으니 더 이상 사용하지 마세요!');
+dontUseMe(1, 2);
+
+const randomBytesPromise = util.promisify(crypto.randomBytes);
+randomBytesPromise(64)
+  .then((buf) => {
+    console.log(buf.toString('base64'));
+  })
+  .catch((error) => {
+    console.error(error);
+  });
+```
+## 5-15. worker_threads
 * 노드에서 멀티 스레드 방식으로 작업을 할 수 있게 지원하는 모듈
     * 잘 안쓰이고, 복잡하다
-    * 예제 참고.
-        * prime.js는 일반 방식, prime_worker.js는 멀티 스레드 방식이다.
-## 5-10 child_process
-* 노드에서 다른 프로그램을 실행하고 싶거나 명령어를 수행하고 싶을 때 사용하는 모듈이다.
-* 이 모듈을 통해 다른 언어의 코드를 실행하고 결괏값을 받을 수 있다.
+    * 예제 worker_threads.js 참조
+    * prime.js는 일반 방식, prime_worker.js는 멀티 스레드 방식이다.
+    *  isMainThread: 현재 코드가 메인 스레드에서 실행되는지, 워커 스레드에서 실행되는지 구분
+    * 메인 스레드에서는 new Worker를 통해 현재 파일(__filename)을 워커 스레드에서 실행시킴
+    * worker.postMessage로 부모에서 워커로 데이터를 보냄
+    * parentPort.on(‘message’)로 부모로부터 데이터를 받고, postMessage로 데이터를 보냄    
 
-## 5-11. 기타 모듈들
+## 5-16. 여러 워커스레드 사용하기
+*  new Worker 호출하는 수만큼 워커 스레드가 생성됨
+    * worker_data.js 참조
+
+## 5-17. child_process
+* 노드에서 다른 프로그램을 실행하고 싶거나 명령어를 수행하고 싶을 때 사용하는 모듈이다.
+    * 현재 노드 프로세스 외에 새로운 프로세스를 띄워서 명령을 수행함.
+    * 명령 프롬프트의 명령어인 dir을 노드를 통해 실행(리눅스라면 ls를 대신 적을 것)
+* 이 모듈을 통해 다른 언어의 코드를 실행하고 결괏값을 받을 수 있다.
+```js
+const exec = require('child_process').exec;
+
+var process = exec('dir');
+
+process.stdout.on('data', function(data) {
+  console.log(data.toString());
+}); // 실행 결과
+
+process.stderr.on('data', function(data) {
+  console.error(data.toString());
+}); // 실행 에러
+```
+* 파이썬 프로그램 실행하기
+    * 파이썬3이 설치되어 있어야 함.
+* spawn.js와 test.py 참조
+
+## 5-18. 기타 모듈들
 * assert : 값을 비교하여 프로그램이 제대로 동작하는지 테스트하는 데 사용한다.
 * dns : 도메인 이름에 대한 IP주소를 얻어내는 데 사용한다.
 * net : HTTP보다 로우 레벨인 TCP나 IPC 통신을 할 때 사용한다.
@@ -365,16 +513,35 @@ console.log('base64:', crypto.createHash('sha512').update('다른 비밀번호')
 * 파일 시스템에 접근하는 모듈이다
     * 파일/폴더 생성, 삭제, 읽기, 쓰기가 가능하다.
     * 웹 브라우저에서는 제한적이었으나 노드는 권한을 가지고 있다.
-    * 예제 ex06
-
-### 6-1-1. 동기 메서드와 비동기 메서드
-* async.js를 여러번 실행하면 실행 할 때마다 순서가 바뀐다.
-* 동기방식은 서버를 처음 실행할 때 정도 쓴다. (쓸때 주의해야함) (sync.js)
+    * 파일 읽기 예제(결과의 버퍼는 뒤에서 설명함)
+    * readme.txt, readFile.js 참조
+## 6-2. fs 프로미스
+* 콜백 방식 대신 프로미스 방식으로 사용 가능
+    * require(‘fs’).promises
+    * 사용하기 훨씬 더 편해서 프로미스 방식을 추천함
+    * readFile.js 참조
+## 6-3. fs로 파일 만들기
+* 파일을 만드는 예제
+    * writeFile.js 참조
+## 6-4. 동기 메서드와 비동기 메서드
+* 노드는 대부분의 내장 모듈 메서드를 비동기 방식으로 처리
+    * 비동기는 코드의 순서와 실행 순서가 일치하지 않는 것을 의미
+    * 일부는 동기 방식으로 사용 가능
+    * 참조 코드 콘솔 예측해보기
+    * async.js 참조
+    * async.js를 여러번 실행하면 실행 할 때마다 순서가 바뀐다.
+* 동기와 비동기: 백그라운드 작업 완료 확인 여부
+* 블로킹과 논 블로킹: 함수가 바로 return 되는지 여부
+* 노드에서는 대부분 동기-블로킹 방식과 비동기-논 블로킹 방식임.
+## 6-5. 동기 메서드 사용하기
+* sync.js 참조
+* 동기방식은 서버를 처음 실행할 때 정도 쓴다. (쓸때 주의해야함)
+## 6-6. 비동기 메서드로 순서 유지하기
 * 비동기작업을하며 순서를 유지하는것을 추천. (asyncOrder.js)
     * sync.js 와의 차이점 : sync.js는 순서대로 실행되지만, asyncOrder.js는 백그라운드에서 동시에 실행된다.
     * 하지만 콜백헬이 발생할 수 있기 때문에 asyncOrderPromise.js 처럼 프로미스로 바꿔준다.
 
-## 6-2. 버퍼와 스트림 이해하기
+## 6-9. 버퍼와 스트림 이해하기
 * **버퍼** : 일정한 크기로 모아두는 데이터
     * 일정한 크기가 되면 한 번에 처리한다.
     * 버퍼링 : 버퍼에 데이터가 찰 떄까지 모으는 작업
@@ -382,13 +549,35 @@ console.log('base64:', crypto.createHash('sha512').update('다른 비밀번호')
     * 일정한 크기로 나눠서 여러 번에 걸쳐서 처리한다.
     * 버퍼의 크기를 작게 만들어서 주기적으로 데이터를 전달한다.
     * 스트리밍 : 일정한 크기의 데이터를 지속적으로 전달하는 작업이다.
+## 6-10. 버퍼 사용하기
 * 노드에서는 버퍼를 사용할 때 Buffer 객체를 사용한다.
-    * 메서드
+    * buffer.js 참조
+## 6-11. Buffer의 메서드
+* 노드에서는 Buffer 객체 사용
     * from(문자열) : 문자열을 버퍼로 바꿀 수 있다. length 속성은 버퍼의 크기를 바이트 단위로 알린다.
     * toString(버퍼) : 버퍼를 다시 문자열로 바꿀 수 있다. 이때 base64나 hex를 인수로 넣으면 해당 인코딩으로도 변환이 가능하다.
     * concat(배열) : 배열 안에 든 버퍼들을 하나로 합친다.
     * alloc(바이트) : 빈 버퍼를 생성한다. 바이트를 인수로 넣으면 해당 크기의 버퍼가 생성된다.
 * **pipe** : 스트림끼리 연결하는 것
+
+## 6-12. 파일 읽는 스트림 사용하기
+* fs.createReadStream
+    * createReadStream에 인자로 파일 경로와 옵션 객체 전달
+    * highWaterMark 옵션은 버퍼의 크기(바이트 단위, 기본값 64KB)
+    * data(chunk 전달), end(전달 완료), error(에러 발생) 이벤트 리스너와 같이 사용
+    * createReadStream.js 참조
+
+## 6-13. 파일 쓰는 스트림 사용하기
+* fs.createWriteStream
+    * createReadStream에 인자로 파일 경로 전달
+    * write로 chunk 입력, end로 스트림 종료
+    * 스트림 종료 시 finish 이벤트 발생
+    * createWriteStream.js 참조
+## 6-14. 스트림 사이에 pipe 사용하기
+* pipe로 여러 개의 스트림을 이을 수 있음
+    * 스트림으로 파일을 복사하는 예제
+    * pipe.js 참조
+
 ### 6-2-1 버퍼와 스트림 차이점
 * 버퍼는  한번에 메모리에 올리는 반면 스트리밍은 잘라서 보내기 때문에 메모리를 아낄 수 있다.
 * buffer-memory.js 참조
