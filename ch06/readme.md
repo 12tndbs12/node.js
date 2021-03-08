@@ -185,9 +185,6 @@ app.use('/', express.static(path.join(__dirname, 'public')));
     * 실제 컨텐츠 경로 /public/stylesheets/style.css
     * 서버의 구조를 파악하기 어려워져서 보안에 도움이 됨
 
-```js
-```
-
 ## 2-7. body-parser
 * 요청의 본문을 해석해주는 미들웨어이다.
     * 폼 데이터나 AJAX 요청의 데이터를 처리한다.
