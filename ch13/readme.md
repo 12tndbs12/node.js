@@ -79,3 +79,108 @@ npx sequelize init
 ## 1-9. 서버 실행하기
 * localhost:8018에 접속
 	* 회원가입 후 로그인하고 상품 등록해보기
+# 2. 서버센트 이벤트 사용하기
+## 2-1. 서버센트 이벤트 사용
+* 경매는 시간이 생명
+	* 모든 사람이 같은 시간에 경매가 종료되어야 함
+	* 모든 사람에게 같은 시간이 표시되어야 함
+	* 클라이언트 시간은 믿을 수 없음(조작 가능)
+	* 따라서 서버 시간을 주기적으로 클라이언트로 내려보내줌
+	* 이 때 서버에서 클라이언트로 단방향 통신을 하기 때문에 서버센트 이벤트(Server Sent Events, SSE)가 적합
+	* 웹 소켓은 실시간으로 입찰할 때 사용
+```
+// console
+npm i sse socket.io
+```
+## 2-2. 서버에 서버센트 이벤트 연결
+* app.js에 SSE(sse.js 작성 후) 연결
+	* sse.on(‘connection’)은 서버와 연결되었을 때 호출되는 이벤트
+	* client.send로 클라이언트에 데이터 전송 가능(책에서는 서버 시각 전송)
+```js
+// sse.js
+const SSE = require('sse');
+module.exports = (server) => {
+    const sse = new SSE(server);
+    sse.on('connection', (client) => {  // 서버센트 이벤트 연결
+	// 클라이언트로 시간을 보내줌.
+	// sse는 문자열만 보내줄 수 있기 때문에 .toString으로 문자열로 보내줌 
+        setInterval(() => {
+            client.send(Date.now().toString());
+        }, 1000);
+    });
+};
+// app.js
+...
+const passportConfig = require('./passport');
+const sse = require('./sse');
+const webSocket = require('./socket');
+
+const app = express();
+...
+const server = app.listen(app.get('port'), () => {
+    console.log(app.get('port'), '번 포트에서 대기중');
+});
+
+webSocket(server, app);
+sse(server);
+```
+## 2-3. 웹 소켓 코드 작성하기
+* socket.js 작성하기
+	* 경매 방이 있기 때문에 11장에서 방에 들어가는 코드 재사용
+	* referer에서 방 아이디를 추출해서 socket.join
+	* roomId는 Good 테이블의 로우 id가 된다.
+```js
+const SocketIO = require('socket.io');
+
+module.exports = (server, app) => {
+    const io = SocketIO(server, {path: '/socket.io'});
+    app.set('io', io);
+    io.on('connection', (socket) => {   // 웹 소켓 연결 시
+        const req = socket.request;
+        const {headers: { referer }} = req;
+        const roomId = referer.split('/')[referer.split('/').length-1];
+        socket.join(roomId);
+        socket.on('disconnect', () => {
+            socket.leave(roomId);
+        });
+    });
+};
+```
+
+## 2-4. EventSource polyfill
+* SSE는 EventSource라는 객체로 사용
+	* IE에서는 EventSource가 지원되지 않음
+	* EventSource polyfill을 넣어줌(첫 번째 스크립트)
+	* new EventSource(‘/sse’)로 서버와 연결
+	* es.onmessage로 서버에서 내려오는 데이터 받음(e.data에 들어있음)
+	* main.html 맨 아래 부분에 코드 추가
+	* 아랫부분은 서버 시간과 경매 종료
+
+```html
+<!-- IE에서도 작동하게 하는 코드 -->
+<script src="https://unpkg.com/event-source-polyfill/src/eventsource.min.js"></script>
+<!-- sse -->
+<script>
+const es = new EventSource('/sse');
+es.onmessage = function (e) {
+    document.querySelectorAll('.time').forEach((td) => {
+        const end = new Date(td.dataset.start); // 경매 시작 시간
+        const server = new Date(parseInt(e.data, 10));
+        end.setDate(end.getDate() + 1); // 경매 종료 시간
+        if (server >= end) { // 경매가 종료되었으면
+        return td.textContent = '00:00:00';
+    } else {
+        const t = end - server; // 경매 종료까지 남은 시간
+        const seconds = ('0' + Math.floor((t / 1000) % 60)).slice(-2);
+        const minutes = ('0' + Math.floor((t / 1000 / 60) % 60)).slice(-2);
+        const hours = ('0' + Math.floor((t / (1000 * 60 * 60)) % 24)).slice(-2);
+        return td.textContent = hours + ':' + minutes + ':' + seconds ;
+    }
+    });
+};
+</script>
+```
+## 2-5. EventSource 확인해보기
+* 개발자 도구 Network 탭을 확인
+	* GET /sse가 서버센트 이벤트 접속한 요청(type이 eventsource)
+	* GET /sse 클릭 후 EventStream 탭을 보면 매 초마다 서버로부터 타임스탬프 데이터가 오는 것을 확인 가능
