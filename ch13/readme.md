@@ -184,3 +184,90 @@ es.onmessage = function (e) {
 * 개발자 도구 Network 탭을 확인
 	* GET /sse가 서버센트 이벤트 접속한 요청(type이 eventsource)
 	* GET /sse 클릭 후 EventStream 탭을 보면 매 초마다 서버로부터 타임스탬프 데이터가 오는 것을 확인 가능
+## 2-6. 클라이언트에 웹소켓, SSE 연결하기
+* auction.html에 서버 시간과 실시간 입찰 기능 추가
+	* 소스 코드는 https://github.com/ZeroCho/nodejs-book/blob/master/ch13/13.2/node-auction/views/auction.html 
+	* 서버 시간을 받아와서 카운트다운하는 부분은 이전과 동일
+	* 세 번째 스크립트 태그는 입찰 시 POST /good/:id/bid로 요청을 보내는 것
+	* 다른 사람이 입찰했을 때 Socket.IO로 입찰 정보를 렌더링함
+## 2-7. 상품정보, 입찰 라우터 작성하기
+* GET /good/:id와 POST /good/:id/bid 추가
+* GET /good/:id
+	* 해당 상품과 기존 입찰 정보들을 불러온 뒤 렌더링
+	* 상품 모델에 사용자 모델을 include할 때 as 속성 사용함(owner과 sold 중 어떤 관계를 사용할지 밝혀주는 것)
+* POST /good/:id/bid
+	* 클라이언트로부터 받은 입찰 정보 저장
+	* 시작 가격보다 낮게 입찰했거나, 경매 종료 시간이 지났거나, 이전 입찰가보다 낮은 입찰가가 들어왔다면 반려
+	* 정상 입찰가가 들어 왔다면 저장 후 해당 경매방의 모든 사람에게 입찰자, 입찰 가격, 입찰 메시지 등을 웹 소켓으로 전달
+	* Good.find 메서드의 order 속성은 include될 모델의 컬럼을 정렬하는 방법(Auction 모델의 bid를 내림차순으로 정렬)
+```js
+// routes/index.js
+router.get('/good/:id', isLoggedIn, async (req, res, next) => {
+    try {
+        const [ good, auction ] = await Promise.all([
+            Good.findOne({
+                where: { id: req.params.id },
+                include: {
+                    model: User,
+                    as: 'Owner',
+                },
+            }),
+            Auction.findAll({
+                where: { GoodId: req.params.id },
+                include: { model: User },
+                order: [['bid', 'ASC']],
+            }),
+        ]);
+        res.render('auction', {
+            title: `${good.name} - NodeAuction`,
+            good,
+            auction,
+        });
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+
+router.post('/good/:id/bid', isLoggedIn, async (req, res, next) => {
+    try {
+        const { big, msg } = req.body;
+        const good = await Good.findOne({
+            where: { id: req.params.id };
+            include: { model: Auction },
+            order: [[{ model: Auction}, 'bid', 'DESC']],
+        });
+        if (good.price >= bid) {
+            return res.status(403).send('시작 가격보다 높게 입찰해야 합니다.');
+        }
+        if (new Date(good.createdAt).valueOf() + (24 * 60 * 60 * 1000) < new Date()) {
+            return res.status(403).send('경매가 이미 종료되었습니다');
+        }
+        if (good.Auctions[0] && good.Auctions[0].bid >= bid) {
+            return res.status(403).send('이전 입찰가보다 높아야 합니다');
+        }
+        const result = await Auction.create({
+            bid,
+            msg,
+            UserId: req.user.id,
+            GoodId: req.params.id,
+        });
+        // 실시간으로 입찰내역 전송
+        req.app.get('io').to(req.params.id).emit('bid', {
+            bid: result.bid,
+            msg: result.msg,
+            nick: req.user.nick,
+        });
+        return res.send('OK');
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+})
+
+module.exports = router;
+```
+## 2-8. 경매 진행해보기
+* 서버 연결 후 경매 시작
+	* 브라우저를 두 개 띄워 각자 다른 아이디로 로그인하면 두 개의 클라이언트가 동시 접속한 효과를 얻을 수 있음
+
