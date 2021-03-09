@@ -5,16 +5,15 @@ http 모듈로 서버 만들기
 * 노드는 자바스크립트 실행기이고 서버가 아니다.
 * 자바스크립트로 서버로 돌릴수있는 코드를 작성하면 서버를 실행해준다.
 * 서버와 클라이언트의 관계
-    * 클라이언트가 서버로 요청을 보낸다.
+    * 클라이언트가 서버로 요청(requset)을 보낸다.
     * 서버는 요청을 처리한다.
-    * 처리 후에 클라이언트로 응답을 보낸다.
+    * 처리 후에 클라이언트로 응답(response)을 보낸다.
 ## 1-2 노드로 http 서버 만들기
 * http 요청에 응답하는 노드 서버
     * createServer로 요청 이벤트에 대기한다
     * req 객체는 요청에 관한 정보가, res 객체는 응답에 관한 정보가 담겨 있다.
 * 서버 코드 수정 후에는 서버를 껏다 키자.
 * 서버는 동시에  실행이 가능하다.
-* server1.js 참고
 ```js
 const http = require('http');
 
@@ -22,6 +21,99 @@ http.createServer((req, res) => {
     // 여기에 어떻게 응답할지 적는다.
 });
 ```
+## 1-3. 8080 포트에 연결하기
+* res 메서드로 응답 보냄
+    * write로 응답 내용을 적고
+    * end로 응답 마무리(내용을 넣어도 됨)
+* listen(포트) 메서드로 특정 포트에 연결
+```js
+const http = require('http');
+
+http.createServer((req,res) => {
+    res.writeHead(200, {'Content-Type' : 'text/html; charset=utf-8'})
+    res.write('<h1>Hello Node!</h1>');
+    res.end('<p>Hello Server!</p>');
+})
+    .listen(8080, () => {   // 서버 연결
+        console.log('8080번 포트에서 서버 대기 중입니다.');
+    });
+```
+## 1-4. 8080 포트로 접속하기
+* 스크립트를 실행하면 8080 포트에 연결됨
+```console
+<!-- console -->
+$ node server1
+```
+* localhost:8080 또는 http://127.0.0.1:8080에 접속
+## 1-5. localhost와 포트
+* localhost는 컴퓨터 내부 주소
+    * 외부에서는 접근 불가능
+* 포트는 서버 내에서 프로세스를 구분하는 번호
+    * 기본적으로 http 서버는 80번 포트 사용(생략가능, https는 443)
+    * 예) www.gilbut.com:80 -> www.github.com
+    * 다른 포트로 데이터베이스나 다른 서버 동시에 연결 가능
+    * ex) 80포트: HTTP, 23포트: Telnet, 21포트: FTP
+
+## 1-6. 이벤트 리스너 붙이기
+* listening과 error 이벤트를 붙일 수 있음.
+```js
+// server1-1.js
+const http = require('http');
+
+const server = http.createServer((req,res) => {
+    // HTML 명시
+    res.writeHead(200, {'Content-Type' : 'text/html; charset=utf-8'})
+    res.write('<h1>Hello Node!</h1>');
+    res.write('<p>Hello server</p>');
+    res.end('<p>Hello Me</p>');
+})
+.listen(8080);
+//  listen 콜백함수를 밖으로 뺴는 경우
+server.on('listening', () => {
+    console.log('8080번 포트에서 서버 대기 중입니다.');
+});
+// 에러처리
+server.on('error', (error) => {
+    console.error(error);
+});
+```
+
+## 1-7. 한 번에 여러 개의 서버 실행하기
+* createServer를 여러 번 호출하면 됨.
+    * 단, 두 서버의 포트를 다르게 지정해야 함.
+    * 같게 지정하면 EADDRINUSE 에러 발생
+```js
+// server1-2.js
+const http = require('http');
+
+http.createServer((req, res) => {
+    res.writeHead(200, {'Content-Type' : 'text/html; charset=utf-8'})
+    res.write('<h1>Hello Node!</h1>');
+    res.end('<p>Hello Me</p>');
+})
+    .listen(8080, () => { // 서버 연결
+        console.log('8080번 포트에서 서버 대기중!');
+    });
+
+http.createServer((req, res) => {
+    res.writeHead(200, {'Content-Type' : 'text/html; charset=utf-8'})
+    res.write('<h1>Hello Node!</h1>');
+    res.end('<p>Hello Me</p>');
+})
+    .listen(8081, () => { // 서버 연결
+        console.log('8080번 포트에서 서버 대기중!');
+    });
+```
+## 1-8. html 읽어서 전송하기
+* write와 end에 문자열을 넣는 것은 비효율적
+    * fs 모듈로 html을 읽어서 전송하자
+    * write가 버퍼도 전송 가능
+* server2.js, server2.html 참조
+## 1-9. server2 실행하기
+* 포트 번호를 8081로 바꿈
+    * server1.js를 종료했다면 8080번 포트를 계속 써도 됨
+    * 종료하지 않은 경우 같은 포트를 쓰면 충돌이 나 에러 발생
+
 # 2. REST와 라우팅 사용하기
 ## 2-1. REST API
 * 서버에 요청을 보낼 때는 주소를 통해 요청의 내용을 표현
@@ -47,9 +139,20 @@ http.createServer((req, res) => {
     * REST API를 사용한 주소 체계를 이용하는 서버이다.
 
 ## 2-3. REST API 서버 만들기
-## 2-4. POST, PUT, DELETE 요청 보내기
-*  restServer.js 참조
+* ex02 참조
+* restServer.js에 주목
+    * GET 메서드에서 /, /about 요청 주소는 페이지를 요청하는 것이므로 HTML 파일을 읽어서 전송합니다. AJAX 요청을 처리하는 /users에서는 users 데이터를 전송합니다. JSON 형식으로 보내기 위해 JSON.stringify를 해주었습니다. 그 외의 GET 요청은 CSS나 JS 파일을 요청하는 것이므로 찾아서 보내주고, 없다면 404 NOT FOUND 에러를 응답합니다.
+    * POST와 PUT 메서드는 클라이언트로부터 데이터를 받으므로 특별한 처리가 필요합니다. req.on('data', 콜백)과 req.on('end', 콜백) 부분인데요. 3.6.2절의 버퍼와 스트림에서 배웠던 readStream입니다. readStream으로 요청과 같이 들어오는 요청 본문을 받을 수 있습니다. 단, 문자열이므로 JSON으로 만드는 JSON.parse 과정이 한 번 필요합니다.
+    * DELETE 메서드로 요청이 오면 주소에 들어 있는 키에 해당하는 사용자를 제거합니다.
+    * 해당하는 주소가 없을 경우 404 NOT FOUND 에러를 응답합니다.
+## 2-4. REST 서버 실행하기
+* localhost:8085에 접속
+## 2-5. REST 요청 확인하기
 * f12(개발자도구) Network 탭에서 요청 내용을 실시간으로 확인 할 수 있다.
+    * Name은 요청 주소, Method는 요청 메서드, Status는 HTTP 응답 코드
+    * Protocol은 HTTP 프로토콜, Type은 요청 종류(xhr은 AJAX 요청)
+
+
 
 # 3. 쿠키와 세션 이해하기
 ## 3-1. 쿠키의 필요성

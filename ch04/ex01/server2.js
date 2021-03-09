@@ -6,9 +6,9 @@ const server = http.createServer(async (req,res) => {
         const data = await fs.readFile('./server2.html');
         res.end(data);
     } catch (error) {
-        console.error(err);
+        console.error(error);
         res.writeHead(200, {'Content-Type' : 'text/plain; charset=utf-8'})  // plain은 일반 메세지
-        res.end(err.message)
+        res.end(error.message)
     }
 })
     .listen(8080);
