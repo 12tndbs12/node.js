@@ -271,3 +271,73 @@ module.exports = router;
 * 서버 연결 후 경매 시작
 	* 브라우저를 두 개 띄워 각자 다른 아이디로 로그인하면 두 개의 클라이언트가 동시 접속한 효과를 얻을 수 있음
 
+# 3. 스케줄링 구현하기
+## 3-1. 스케줄러 설치하기
+* 경매가 생성된 지 24시간 후에 낙찰자를 정함
+	* 24시간 후에 낙찰자를 정하는 시스템 구현해야 함
+	* node-schedule 모듈 사용
+```console
+npm i node-schedule
+```
+## 3-2. 스케줄링용 라우터 추가하기
+* routes/index.js에 추가
+	* schedule 모듈을 불러옴
+	* scheduleJob 메서드로 일정 예약
+	* 첫 번째 인수로 실행될 시각을 넣고, 두 번째 인수로 콜백 함수를 넣음
+	* 가장 높은 입찰을 한 사람을 찾아 상품 모델의 낙찰자 아이디에 넣어줌
+	* 동시에, 낙찰자의 보유 자산을 낙찰 금액만큼 제외(sequelize.literal(컬럼 – 숫자)로 숫자 줄임)
+	* 단점: 노드 기반으로 스케쥴링이 되므로, 노드가 종료되면 스케줄 예약도 같이 종료됨
+	* 서버가 어떤 에러로 종료될 지 예측하기 어려우므로 보완하기 위한 방법이 필요함
+```js
+// routes/index.js
+...
+const fs = require('fs');
+const Schedule = require('node-schedule');
+
+const { Good, Auction, User } = require('../models');
+...
+router.post('/good', isLoggedIn, upload.single('img'), async (req, res, next) => {
+    try {
+        const { name, price } = req.body;
+        const good = await Good.create({
+            OwnerId: req.user.id,
+            name,
+            img: req.file.filename,
+            price,
+        });
+        const end = new Date();
+        end.setDate(end.getDate() + 1)  //하루 뒤
+        schedule.scheduleJob(end, async () => {
+            // 트랙잭션 : 같이 묶여서 같이 성공하거나 같이 실패한다.
+            const t = await sequelize.transaction();
+            try {
+                const success = await Auction.findOne({
+                    where: { GoodId: good.id },
+                    oreder: [['bid', 'DESC']],
+                    transaction: t,
+                });
+                await Good.update({ SoldId: success.UserId }, { where: { id: good.id}, transaction: t });
+                // UPDATE Users SET money = money - 14000 where id = 1;
+                await User.update({
+                    money: sequelize.literal(`money - ${success.bid}`),
+                }, {
+                    where: { id: success.UserId },
+                    transaction: t,
+                });
+                await t.commit();
+            } catch (error) {
+                await t.rollback();
+            }
+        });
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+});
+...
+```
+
+
+
+

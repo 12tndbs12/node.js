@@ -2,8 +2,9 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const schedule = require('node-schedule');
 
-const { Good, Auction, User } = require('../models');
+const { Good, Auction, User, sequelize } = require('../models');
 const { isLoggedIn, isNotLoggedIn } = require('./middlewares');
 
 const router = express.Router();
@@ -54,14 +55,39 @@ const upload = multer({
     }),
     limits: { fileSize: 5 * 1024 * 1024 },
 });
+
 router.post('/good', isLoggedIn, upload.single('img'), async (req, res, next) => {
     try {
         const { name, price } = req.body;
-        await Good.create({
-        OwnerId: req.user.id,
-        name,
-        img: req.file.filename,
-        price,
+        const good = await Good.create({
+            OwnerId: req.user.id,
+            name,
+            img: req.file.filename,
+            price,
+        });
+        const end = new Date();
+        end.setDate(end.getDate() + 1)  //하루 뒤
+        schedule.scheduleJob(end, async () => {
+            // 트랙잭션 : 같이 묶여서 같이 성공하거나 같이 실패한다.
+            const t = await sequelize.transaction();
+            try {
+                const success = await Auction.findOne({
+                    where: { GoodId: good.id },
+                    oreder: [['bid', 'DESC']],
+                    transaction: t,
+                });
+                await Good.update({ SoldId: success.UserId }, { where: { id: good.id}, transaction: t });
+                // UPDATE Users SET money = money - 14000 where id = 1;
+                await User.update({
+                    money: sequelize.literal(`money - ${success.bid}`),
+                }, {
+                    where: { id: success.UserId },
+                    transaction: t,
+                });
+                await t.commit();
+            } catch (error) {
+                await t.rollback();
+            }
         });
         res.redirect('/');
     } catch (error) {
