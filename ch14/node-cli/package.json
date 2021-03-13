@@ -9,6 +9,6 @@
   "author": "rkdden",
   "license": "ISC",
   "bin": {
-    "cli": "./index.js"
+    "cli": "./template.js"
   }
 }
