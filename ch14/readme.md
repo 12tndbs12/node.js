@@ -39,6 +39,7 @@ console.log('Hello CLI');
     * 보통 전역 설치할 때는 패키지 명을 입력하지만 현재 패키지를 전역 설치할 때는 적지 않음
     * 리눅스나 맥에서는 명령어 앞에 sudo를 붙여야 할 수도 있음
     * 전역 설치한 것이기 때문에 node_modules가 생기지 않음
+* 지우는법 : npm rm -g 
 ## 1-6. 명령어에 옵션 붙이기
 * process.argv로 명령어에 어떤 옵션이 주어졌는지 확인 가능(배열로 표시)
     * 코드가 바뀔 때마다 전역 설치할 필요는 없음
@@ -54,5 +55,153 @@ Hello CLI [
   'two',
   'three'
 ]
-
 ```
+## 1-7. 사용자로부터 입력 받기
+* 노드 내장 모듈 readline 사용
+  * createInterface 메서드로 rl 객체를 만듦
+  * process.stdin, process.stdout은 각각 콘솔을 통해 입력받고 출력한다는 의미
+  * question 메서드로 질문을 표시하고 답변이 들어오면 콜백 함수가 실행됨
+  * 답변은 answer 매개변수에 담김
+```js
+// index.js
+#!/usr/bin/env node
+const readline = require('readline');
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+});
+
+rl.question('예제가 재미있습니까? (y/n)', (answer) => {
+    if (answer === 'y') {
+        console.log('감사');
+    } else if (answer === 'n'){
+        console.log('죄송');
+    }else {
+        console.log('y나 n만 입력하세요.');
+    }
+    rl.close();
+});
+```
+## 1-8. 콘솔 내용 지우기
+* console.clear로 콘솔 내용 지우기
+	* 프로그램 시작 시와, 잘못된 답변 후에 콘솔 지움
+```js
+#!/usr/bin/env node
+const readline = require('readline');
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+});
+
+console.clear();
+const answerCallback = (answer) => {
+    if (answer === 'y') {
+        console.log('감사');
+        rl.close();
+    } else if (answer === 'n'){
+        console.log('죄송');
+        rl.close();
+    }else {
+        console.log('y나 n만 입력하세요.');
+        rl.question('예제가 재미있습니까? (y/n)', answerCallback);
+    }
+};
+
+rl.question('예제가 재미있습니까? (y/n)', answerCallback);
+```
+## 1-9. 템플릿을 만들어주는 명령어 만들기
+* template.js 작성
+* 디렉토리가 존재하는지 확인하는 exist 함수와 디렉토리를 생성하는 mkdirp 함수를 만듦
+* program이라는 함수는 template.js의 실행부, makeTemplate은 옵션을 읽어서 알맞은 템플릿을 작성해주는 함수
+* 옵션에 따라 다른 동작을 하도록 분기 처리
+* package.json의 명령어를 바꿔주고 전역 재설치( npm i -g )
+* 옵션을 입력하지 않는 경우 readline 모듈로 단계적으로 질문을 해 옵션을 외울 필요가 없도록 함
+* 옵션을 입력하는 경우 예전과 마찬가지로 동작
+* dirAnswer, nameAnswer, typeAnswer는 각각 디렉터리, 파일명, 템플릿 종류에 대해 사용자 입력을 받는 함수(코드의 순서가 역순)
+```json
+...
+"bin": {
+    "cli": "./template.js"
+  }
+}
+```
+# 2. Commander, Inquirer 사용하기
+## 2-1. 패키지로 쉽게 CLI 프로그램 만들기
+* npm에는 CLI 프로그램을 위한 라이브러리가 많이 준비되어 있음
+    * commander(CLI)와 inquirer(사용자와 상호작용), chalk(콘솔에 컬러)를 사용해서 예제를 만들어 봄
+    * 14.1의 프로그램을 commander와 inquirer로 재작성할 것
+    * chalk는 터미널에 색을 입히기 위한 용도
+```console
+npm i commander inquier chalk
+```
+## 2-2. commander 사용하기
+* command.js 파일 작성
+    * version: 프로그램의 버전 설정(--version 또는 -v로 확인)
+    * usage: 프로그램 사용 방법 기입(--help로 또는 –h로 확인)
+    * command: 명령어 등록(template <type>과 * 등록함)
+        * <>는 필수 옵션을 의미
+        * []는 선택 옵션을 의미
+    * description: 명령어에 대한 설명을 설정하는 메서드
+    * alias: 명령어에 대한 별칭
+    * option: 명령어에 대한 옵션을 등록
+        * --옵션 [값] 또는 –옵션 <값> 형식
+        * 두 번째 인자는 설명, 세 번째 인자는 기본값
+    * Action: 명령어가 실행될 때 수행할 동작 등록
+    * parse: process.argv를 파싱하여 옵션 등록
+```js
+#! user/bin/env node
+const { program, option } = require('commander');
+const { version } = require('./package.json');
+
+program
+    .version(version, '-v, --version') // cli -v 버전 확인
+    .name('cli'); // cli -h 사용방법
+
+program
+    .command('template <type>') // cli template html
+    .usage('<type> --filename [filename] --path [path]')
+    .description('템플릿을 생성합니다.')
+    .alias('tmpl') // cli tmpl express-router 별명
+    .option('-f --filename [filename]', '파일명을 입력하세요.', 'index')
+    .option('-d, --directory [path]', '생성 경로를 입력하세요.', '.')
+    .action((type, options) => {
+        console.log(type, options.filename, options.directory);
+    });
+// 등록되지 않은 명령어 칠때 ex) cli abc
+program
+    .command('*', { noHelp: true})
+    .action(() => {
+        console.log('해당 명령어를 찾을 수 없습니다.');
+        program.help(); // cli -h
+    });
+
+program.parse(process.argv);
+```
+## 2-3. commander 프로그램 실행하기
+* 프로그램 전역 재설치 후 실행해보기
+    * -v, -h로 버전, 설명 확인 가능하고 필수 옵션도 자동으로 체크해줌
+```js
+// package.json
+...
+"bin": {
+    "cli": "./command.js"
+  },
+...
+```
+## 2-4. template.js를 커맨더로 전환하기
+* command.js 수정
+    * template.js를 붙여 넣은 후 첫 require 부분과 끝 program 부분만 수정하면 됨
+```js
+...
+    .option('-d, --directory [path]', '생성 경로를 입력하세요.', '.')
+    .action((type, options) => {
+        console.log(type, options.filename, options.directory);
+        makeTemplate(type, options.filename, options.directory);
+    });
+...
+```
+## 2-5. 전환된 파일 실행하기
+* 명령어들을 커맨더 식으로 전환함
+    * 옵션들은 순서를 바꿔서 입력해도 됨

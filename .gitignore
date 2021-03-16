@@ -36,3 +36,5 @@ ch13/node-auction/config
 ch13/node-auction/node_modules
 ch13/node-auction/.env
 ch13/node-auction/uploads
+
+ch14/node-cli/node_modules

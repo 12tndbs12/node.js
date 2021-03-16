@@ -9,6 +9,11 @@
   "author": "rkdden",
   "license": "ISC",
   "bin": {
-    "cli": "./template.js"
+    "cli": "./command.js"
+  },
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "commander": "^7.1.0",
+    "inquirer": "^8.0.0"
   }
 }
