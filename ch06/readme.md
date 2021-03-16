@@ -10,8 +10,10 @@
 ## 1-2. package.json 만들기
 * 직접 만들거나 npm init 명령어 생성
     * nodemon이 소스 코드 변경 시 서버를 재시작해준다.
-* npm i express
-* npm i -D nodemon
+```
+npm i express
+npm i -D nodemon
+```
 ## 1-3. app.js 작성하기
 * 서버 구동의 핵심이 되는 파일이다.
     * app.set('port', 포트)로 서버가 실행될 포트를 지정한다.
@@ -71,6 +73,7 @@ app.listen(app.get('port'), () => {
     * app.use('/abc',미들웨어) : abc로 시작하는 요청에서 미들웨어 실행
     * app.post('/abc',미들웨어) : abc로 시작하는 POST요청에서 미들웨어 실행
 ```js
+...
 // app.use 안에 있는 함수 자체가 미들웨어이다.
 app.use((req, res, next) => {
     console.log('모든 요청에 실행하고싶어요');
@@ -155,6 +158,7 @@ COOKIE_SECRET=cookiesecret
 ```
 ## 2-4. dotenv
 * env 파일을 읽어서 process.env로 만든다.
+    * . + env
     * process.env.COOKIE_SECRET에 cookiesecret 값이 할당됨(키=값 형식)
     * 비밀 키들을 소스 코드에 그대로 적어두면 소스 코드가 유출되었을 때 비밀 키도 같이 유출되기 때문에 쓴다.
     * .env 파일에 비밀 키들을 모아두고 .env 파일만 잘 관리하면 된다.
@@ -167,9 +171,10 @@ dotenv.config();        // 최대한 위로
 * 서버로 들어온 요청과 응답을 기록해주는 미들웨어이다.
     * 로그로 자세한 정도를 선택할 수 있다. (dev, tiny, short, common, combined)
     * ex) app.use(morgan('dev'));
+    * 예시) GET / 200 51.267 ms – 1539
+    * 순서대로 HTTP요청 요청주소 상태코드 응답속도 – 응답바이트
     * 개발환경에서는 dev, 배포환경에서는 combined를 애용한다.
     * 더 자세한 로그를 위해 winston 패키지를 사용한다.
-
 ## 2-6. static
 * 정적인 파일들을 제공하는 미들웨어이다.
     * 인수로 정적 파일의 경로를 제공한다.
@@ -458,12 +463,12 @@ router.get('/user/:id', (req, res) => {
     console.log(req.params, req.query);
 });
 ```
-    * /user/123?limit=5&skip=10 주소 요청인 경우
+* /user/123?limit=5&skip=10 주소 요청인 경우
 ```js
 // 앞은 req.params, 뒤는 req.query (쿼리스트링)
 { id: 123 } {limit: '5', skip: '10'}
 ```
-    * 일반 라우터보다 뒤에 위치해야 한다.
+* 일반 라우터보다 뒤에 위치해야 한다.
 ```js
 router.get('/user/:id', (req, res) => {
     console.log('얘만 실행된다.');
@@ -558,14 +563,14 @@ app.use(morgan('dev'));
 ...
 ```
 ## 5-3. Pug - HTML 표현
-```js
-// 퍼그
+```pug
+//- 퍼그
 doctype html
 html
     head
         title = tile
         link(rel='stylesheet', href='/stylesheets/style.css')
-// HTML
+//- HTML
 <!DOCTYPE html>
 <html>
     <head>
@@ -574,42 +579,42 @@ html
     </head>
 </html>
 ```
-```js
-// 퍼그
+```pug
+//-  퍼그
 #login-button
 .post-image
 span#highlight
 p.hidden.full
-// HTML
+//- HTML
 <div id="login-button"></div>
 <div class="post-image"></div>
 <span id="highlight"></span>
 <p class="hidden full"></p>
 ```
-```js
-// 퍼그
+```pug
+//- 퍼그
 p Welcome to Express
 button(type='submit') 전송
-// HTML
+//- HTML
 <p>Welcome to Express</p>
 <button type="submit">전송</button>
 ```
-```js
-// 퍼그
+```pug
+//- 퍼그
 p
     | 안녕하세요.
     | 여러 줄을 입력합니다.
     br
     | 태그도 중간에 넣을 수 있습니다.
-// HTML
+//- HTML
 <p>
     안녕하세요. 여러 줄을 입력합니다.
     <br/>
     태그도 중간에 넣을 수 있습니다.
 </p>
 ```
-```js
-// 퍼그
+```pug
+//- 퍼그
 style.
     h1 {
         font-size: 30px;
@@ -617,7 +622,7 @@ style.
 script.
     const message = 'Pug';
     alert(message);
-// HTML
+//- HTML
 <style>
     h1 {
         font-size: 30px;
