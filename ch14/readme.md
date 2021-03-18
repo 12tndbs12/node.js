@@ -128,6 +128,7 @@ rl.question('예제가 재미있습니까? (y/n)', answerCallback);
 }
 ```
 # 2. Commander, Inquirer 사용하기
+* 둘다 버전이 바뀜
 ## 2-1. 패키지로 쉽게 CLI 프로그램 만들기
 * npm에는 CLI 프로그램을 위한 라이브러리가 많이 준비되어 있음
     * commander(CLI)와 inquirer(사용자와 상호작용), chalk(콘솔에 컬러)를 사용해서 예제를 만들어 봄
@@ -205,3 +206,30 @@ program.parse(process.argv);
 ## 2-5. 전환된 파일 실행하기
 * 명령어들을 커맨더 식으로 전환함
     * 옵션들은 순서를 바꿔서 입력해도 됨
+## 2-6. inquirer 사용하기
+* 여전히 옵션들을 외워야 하는 불편함
+    * inquirer로 상호 작용 추가
+## 2-7. inquirer API
+* readline보다 간결해짐
+    * 커맨더의 액션이 실행되지 않은 경우 triggered가 false라서 inquirer가 실행됨
+    * prompt 메서드로 상호작용 창 띄울 수 있음
+        * type: 질문의 종류( input, checkbox, list, password, confirm 등)
+        * 예제에서는 input(평범한 답변), list(다중 택일), confirm(Yes or No) 사용
+        * name: 질문의 이름, 답변 객체 속성명으로 질문의 이름을, 속성 값으로 질문의 답을 가짐
+        * message: 사용자에게 표시되는 문자열(여기에 질문을 적음)
+        * choices: type이 checkbox, list 등인 경우 선택지를 넣는 곳(배열로)
+        * default: 답 적지 않았을 때 기본값
+    * 예제에서는 질문 네 개를 연달아 하고 있음
+    * 질문의 name이 type, name, directory라서 각각의 답변이 answers.type, answers.name, answers.director에 들어 있음.
+## 2-8. chalk
+* 콘솔에 색을 추가함
+    * command.js 참조
+    * console.log과 console.error에 chalk 적용
+    * 문자열을 chalk 객체의 메서드로 감싸면 됨
+    * chalk.green, chalk.yellow, chalk.red 등등
+    * chalk.rgb(12, 34, 56)(문자열) 또는 chalk.hex(‘#123456’)(텍스트)도 가능
+    * 배경색도 지정 가능해서 chalk.bgGreen, chalk.bgYellow, chalk.bgRgb, chalk.bgHex
+## 2-9. 프로그램을 공유하고 싶다면?
+* 만든 CLI 프로그램을 공유하고 싶다면 5장의 과정대로 npm에 배포하면 됨
+    * 다른 사용자가 npm i –g <패키지명>을 한다면 다운로드 받아 사용할 수 있음
+

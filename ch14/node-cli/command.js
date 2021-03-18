@@ -3,6 +3,7 @@ const { program, option } = require('commander');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
+const inquirer = require('inquirer');
 const { version } = require('./package.json');
 
 const htmlTemplate = `
@@ -96,11 +97,49 @@ program
         makeTemplate(type, options.filename, options.directory);
     });
 // 등록되지 않은 명령어 칠때 ex) cli abc
-program
-    .command('*', { noHelp: true })
-    .action(() => {
-        console.log('해당 명령어를 찾을 수 없습니다.');
-        program.help(); // cli -h
-    });
+// program
+//     .command('*', { noHelp: true })
+//     .action(() => {
+//         console.log('해당 명령어를 찾을 수 없습니다.');
+//         program.help(); // cli -h
+//     });
 
-program.parse(process.argv);
+program.action((cmd, args) => { // cli 또는 cli 틀린명령어
+    if (args) {
+        console.log(chalk.bold.red('해당 명령어를 찾을 수 없습니다.'));
+        program.help(); // cli -h
+    } else {
+        inquirer.prompt([
+            {
+                name: "type",
+                message: '템플릿 종류를 선택하세요.',
+                type: 'list', // 사용자가 리스트중 선택
+                choices: ['html', 'express-router'],
+            },
+            {
+                name: 'name',
+                message: '파일의 이름을 입력하세요.',
+                type: 'input',   //사용자가 자유롭게 입력
+                default: 'index',
+            }, 
+            {
+                name: 'directory',
+                type: 'input',
+                message: '파일이 위치할 폴더의 경로를 입력하세요.',
+                default: '.',
+            }, 
+            {
+                type: 'confirm',
+                name: 'confirm',
+                message: '생성하시겠습니까?',
+            }
+        ])
+            .then((answers) => {
+                if (answers.confirm) {
+                    makeTemplate(answers.type, answers.name, answers.directory);
+                    console.log(chalk.rgb(128,128,128)('터미널을 종료합니다.'));
+                }
+            });
+    }
+})
+    .parse(process.argv);

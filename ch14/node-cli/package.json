@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "chalk": "^4.1.0",
-    "commander": "^7.1.0",
-    "inquirer": "^8.0.0"
+    "commander": "^5.0.0",
+    "inquirer": "^7.1.0"
   }
 }
