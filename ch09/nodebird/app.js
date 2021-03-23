@@ -17,7 +17,7 @@ const { sequelize } = require('./models');
 
 const passportConfig = require('./passport');
 
-const app = express();
+    const app = express();
 passportConfig();   // 패스포트 설정
 // 개발할때는 8001 나중에 배포할 때는 .env 파일에 포트번호 삽입
 app.set('port', process.env.PORT || 8001);
