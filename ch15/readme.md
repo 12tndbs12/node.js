@@ -190,4 +190,107 @@ app.post('/form', csrfProtection, (req, res) => {
 * pm2 monit으로 프로세스 모니터링
     * npx pm2 monit
     * 프로세스별로 로그를 실시간으로 볼 수 있음
+## 1-15. winston
+* console.log와 console.error를 대체하기 위한 모듈
+    * 위 두 메서드는 휘발성
+    * 로그를 파일에 기록하는 것이 좋음
+    * 윈스턴 설치 후 logger.js 작성
+    * npm i winston
+```js
+// logger.js
+const { createLogger, format, transports } = require('winston');
 
+const logger = createLogger({
+    level: 'info',
+    format: format.json(),
+    transports: [
+        new transports.File({ filename: 'combined.log' }),
+        new transports.File({ filename: 'error.log', level: 'error' }),
+    ],
+});
+
+if (process.env.NODE_ENV !== 'production') {
+    // 개발용 일때는 파일에 표시
+    logger.add(new transports.Console({ format: format.simple() }));
+}
+
+module.exports = logger;
+```
+## 1-16. winston 메서드
+* createLogger로 로거 인스턴스를 생성
+    * level은 로그의 심각도(error, warn, info, verbose, debug, silly 순, 중요도 순)
+    * info를 고른 경우 info보다 심각한 단계 로그도 같이 기록됨
+    * format은 로그의 형식(json, label, timestamp, printf, combine, simple 등 지원)
+    * 기본적으로는 JSON으로 기록하지만 로그 시간을 표시하려면 timestamp를 쓰는 게 좋음
+    * transports는 로그 저장 방식
+    * new transports.File은 파일로 저장한다는 뜻, new transports.Console은 콘솔에 출력한다는 뜻
+    * 인자로 filename(파일명), level(심각도) 제공
+
+## 1-17. winston 적용하기
+* app.js와 연결
+```js
+// app.js
+...
+dotenv.config();
+const pageRouter = require('./routes/page');
+const authRouter = require('./routes/auth');
+const postRouter = require('./routes/post');
+const userRouter = require('./routes/user');
+const { sequelize } = require('./models');
+const passportConfig = require('./passport');
+// 추가
+const logger = require('./logger');
+...
+app.use('/', pageRouter);
+app.use('/auth', authRouter);
+app.use('/post', postRouter);
+app.use('/user', userRouter);
+
+app.use((req, res, next) => {
+    const error =  new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
+    error.status = 404;
+    // 추가
+    logger.info('hello');
+    // 추가
+    logger.error(error.message);
+    next(error);
+}
+```
+## 1-18. winston 로그 확인하기
+* npm run dev로 개발용 서버 실행
+    * http://localhost:8001/abcd 에 접속
+    * 각각의 로그가 파일에 기록됨
+    * 파일에 로그가 저장되어 관리 가능
+    * winston-daily-rotate-file이라는 패키지로 날짜별로 관리 가능
+```js
+// combined.log
+{"message":"hello","level":"info"}
+{"message":"GET /abcd 라우터가 없습니다.", "level":"error"}
+// error.log
+{"message":"GET /abcd 라우터가 없습니다.", "level":"error"}
+```
+## 1-19. helmet, hpp로 보안 관리하기
+* 모든 취약점을 방어해주진 않지만 실무에서 필수인 패키지
+    * npm i helmet hpp
+    * 배포 환경일 때만 사용하면 됨
+    * 배포할 때는 무조건 설치해주는게 좋다.
+```js
+...
+const passport = require('passport');
+// 추가
+const helmet = require('helmet');
+// 추가
+const hpp = require('hpp');
+...
+if (process.env.NODE_ENV === 'production') {
+    app.enable('trust proxy');
+    app.use(morgan('combined'));
+    // 추가
+    app.use(helmet({ contentSecurityPolicy: false }));
+    // 추가
+    app.use(hpp());
+} else {
+    app.use(morgan('dev'));
+}
+...
+```
