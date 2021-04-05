@@ -144,3 +144,50 @@ app.post('/form', csrfProtection, (req, res) => {
     res.send('OK');
 });
 ```
+## 1-9. pm2 소개
+* Process manager 2
+* 원활한 서버 운영을 위한 패키지
+    * 서버가 에러로 인해 꺼졌을 때 서버를 다시 켜 줌
+    * 멀티 프로세싱 지원(노드 프로세스 수를 1개 이상으로 늘릴 수 있음)
+    * 요청을 프로세스들에 고르게 분배
+    * 단점: 프로세스간 서버의 메모리 같은 자원 공유 불가
+    * 극복: memcached나 redis같은 메모리 DB 사용(공유 메모리를 별도 DB에 저장)
+
+## 1-10. pm2 사용하기
+* pm2 전역 설치 후, 명령어 사용
+    * npm i pm2
+    * package.json 스크립트 수정
+    * pm2 start 파일명으로 실행
+```js
+// package.json
+"scripts": {
+        "start": "cross-env NODE_ENV=production PORT=80 pm2 start server.js",
+        ...
+}
+```
+## 1-11. 프로세스 목록 확인하기
+* pm2 list로 프로세스 목록 확인 가능
+    * 프로세스가 백그라운드로 돌아가기 때문에 콘솔에 다른 명령어 입력 가능
+    * npx pm2 list
+
+## 1-12. pm2로 멀티 프로세싱하기
+* pm2 start [파일명] –i [프로세스 수] 명령어로 멀티 프로세싱 가능
+    * 프로세스 수에 원하는 프로세스의 수 입력
+    * 0이면 CPU 코어 개수만큼 생성, -1이면 CPU 코어 개수보다 1개 적게 생성
+    * -1은 하나의 프로세스를 노드 외의 작업 수행을 위해 풀어주는 것
+```js
+// package.json
+"scripts": {
+        "start": "cross-env NODE_ENV=production PORT=80 pm2 start server.js -i 0",
+        ...
+}
+```
+## 1-13. 서버 종료 후 멀티 프로세싱 하기
+* pm2 kill로 프로세스 전체 종료 가능
+    * npx pm2 kill && npm start
+    * 재시작하면 프로세스가 CPU 코어 개수만큼 실행됨
+## 1-14. 프로세스 모니터링하기
+* pm2 monit으로 프로세스 모니터링
+    * npx pm2 monit
+    * 프로세스별로 로그를 실시간으로 볼 수 있음
+
